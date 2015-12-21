@@ -61,9 +61,9 @@ source "$DATADIR/datadir.conf"
     [ -f "$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.sshkey" ]
     $skip_rest_if_already_done ; set -e
     ssh-keygen -f  "$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.sshkey" -N ""
-    echo root >"$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.sshuser"
+    echo centos >"$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.sshuser"
     cat >>"$DATADIR/vmapp-vdc-1box/postcopy.txt" <<EOF
-1box-lxc.netfilter.x86_64.raw.sshkey.pub /root/.ssh/authorized_keys mode=600
+1box-lxc.netfilter.x86_64.raw.sshkey.pub /home/centos/.ssh/authorized_keys mode=644
 EOF
 ) ; prev_cmd_failed
 
