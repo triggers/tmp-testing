@@ -27,8 +27,31 @@ source "$DATADIR/datadir.conf"
 (
     $starting_checks "Clone axsh/vmapp-vdc-1box from github"
     [ -d "$DATADIR/vmapp-vdc-1box/.git" ]
-    $skip_rest_if_already_done
-
+    $skip_rest_if_already_done ; set -e
     cd "$DATADIR"
     git clone https://github.com/axsh/vmapp-vdc-1box
+) ; prev_cmd_failed
+
+(
+    $starting_checks "Clone hansode/vmbuilder from github"
+    [ -f "$DATADIR/vmapp-vdc-1box/vmbuilder/.git" ]  # .git a file, because it is a submodule thingy
+    $skip_rest_if_already_done ; set -e
+    cd "$DATADIR"
+    make
+) ; prev_cmd_failed
+
+(
+    $starting_checks "Do ./prepare-vmimage.sh lxc x86_64"
+    lxcimagedir="$DATADIR/vmapp-vdc-1box/guestroot.lxc.x86_64/var/lib/wakame-vdc/images"
+    lxcimages=(
+	lbnode.x86_64.lxc.md.raw.tar.gz
+	centos-6.6.x86_64.lxc.md.raw.tar.gz
+	lb-centos6.6-stud.x86_64.lxc.md.raw.tar.gz
+    )
+    for i in "${lxcimages[@]}"; do
+	[ -f "$lxcimagedir/$i" ] || break -1 2>/dev/null # return error from for loop
+    done
+    $skip_rest_if_already_done ; set -e
+    cd "$DATADIR"
+    ./prepare-vmimage.sh lxc x86_64
 ) ; prev_cmd_failed
