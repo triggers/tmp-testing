@@ -6,10 +6,13 @@ reportfailed()
     exit 255
 }
 
+export CODEDIR="$(cd "$(dirname "$0")" && pwd -P)" || reportfailed
+
 if [ "$DATADIR" = "" ]; then
     # Choose directory of symbolic link by default
-    DATADIR="$(pwd)"
+    DATADIR="$CODEDIR"
 fi
+
 source "$DATADIR/datadir.conf"
 
 kvm_is_running()
