@@ -61,7 +61,7 @@ source "$DATADIR/datadir.conf"
     [ -f "$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.sshkey" ]
     $skip_rest_if_already_done ; set -e
     ssh-keygen -f  "$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.sshkey" -N ""
-    echo root >"$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.sshkey"
+    echo root >"$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.sshuser"
     cat >>"$DATADIR/vmapp-vdc-1box/postcopy.txt" <<EOF
 1box-lxc.netfilter.x86_64.raw.sshkey.pub /root/.ssh/authorized_keys mode=600
 EOF
@@ -85,12 +85,17 @@ EOF
 ) ; prev_cmd_failed
 
 (
-    $starting_checks "Expand and set up fresh image from 1box-lxc.netfilter.x86_64.raw.tar.gz"
-    [ -f "$DATADIR/vmdir/1box-lxc.netfilter.x86_64.raw" ] &&
-	[ -f "$DATADIR/vmdir/kvm-boot.sh" ]
-    $skip_rest_if_already_done ; set -e
-    mkdir -p "$DATADIR/vmdir"
-    cd "$DATADIR/vmdir"
-    "$ORGCODEDIR/ind-steps/kvmsteps/kvm-setup.sh" \
-	"$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.tar.gz"
-) ; prev_cmd_failed
+    $starting_dependents "Set up vmdir"
+    (
+	$starting_checks "Make vmdir"
+	[ -d "$DATADIR/vmdir" ]
+	$skip_rest_if_already_done ; set -e
+	mkdir "$DATADIR/vmdir"
+    ) ; prev_cmd_failed
+    
+    DATADIR="$DATADIR/vmdir" \
+	   "$ORGCODEDIR/ind-steps/kvmsteps/kvm-setup.sh" \
+	   "$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.tar.gz"
+    true
+    $skip_rest_if_already_done
+)

@@ -38,14 +38,14 @@ source "$DATADIR/datadir.conf"
 
 (
     $starting_checks "Copy initial VM image"
-    [ -f "$IMAGEFILENAME" ]
+    [ -f "$DATADIR/$IMAGEFILENAME" ]
     $skip_rest_if_already_done
 
     tar xzvf "$imagesource" -C "$DATADIR" >"$DATADIR"/tar.stdout || reportfailed "untaring of image"
     read IMAGEFILENAME rest <"$DATADIR"/tar.stdout
     [ "$rest" = "" ] || reportfailed "unexpected output from tar: $(<"$DATADIR"/tar.stdout)"
     echo 'IMAGEFILENAME="'$IMAGEFILENAME'"' >>"$DATADIR/datadir.conf"
-
+set -x
     [ -f "${imagesource%.tar.gz}.sshuser" ] && cp "${imagesource%.tar.gz}.sshuser" "$DATADIR/sshuser"
     [ -f "${imagesource%.tar.gz}.sshkey" ] && {
 	cp "${imagesource%.tar.gz}.sshkey" "$DATADIR/sshkey"

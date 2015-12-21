@@ -11,7 +11,7 @@ export CODEDIR="$(cd "$(dirname "$0")" && pwd -P)" || reportfailed
 
 if [ "$DATADIR" = "" ]; then
     # Choose directory of symbolic link by default
-    DATADIR="$(pwd)"
+    DATADIR="$CODEDIR"
 fi
 source "$ORGCODEDIR/../simple-defaults-for-bashsteps.source"
 source "$DATADIR/datadir.conf"
