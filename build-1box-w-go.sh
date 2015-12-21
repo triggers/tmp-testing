@@ -55,3 +55,12 @@ source "$DATADIR/datadir.conf"
     cd "$DATADIR/vmapp-vdc-1box"
     ./prepare-vmimage.sh lxc x86_64
 ) ; prev_cmd_failed
+
+(
+    $starting_checks "Build the raw LXC 1box image with ./box-ctl.sh"
+    set -x
+    [ -f "$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw" ]
+    $skip_rest_if_already_done ; set -e
+    cd "$DATADIR/vmapp-vdc-1box"
+    ./box-ctl.sh build lxc
+) ; prev_cmd_failed
