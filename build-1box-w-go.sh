@@ -70,7 +70,7 @@ source "$DATADIR/datadir.conf"
     [ -f "$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.tar.gz" ]
     $skip_rest_if_already_done ; set -e
     cd "$DATADIR/vmapp-vdc-1box"
-    tar czvf 1box-lxc.netfilter.x86_64.raw.tar.gz 1box-lxc.netfilter.x86_64.raw
+    tar czSvf 1box-lxc.netfilter.x86_64.raw.tar.gz 1box-lxc.netfilter.x86_64.raw
 ) ; prev_cmd_failed
 
 (
