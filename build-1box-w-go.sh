@@ -57,6 +57,17 @@ source "$DATADIR/datadir.conf"
 ) ; prev_cmd_failed
 
 (
+    $starting_checks "Generate sshkey and login info for the to-be-built image"
+    [ -f "$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.sshkey" ]
+    $skip_rest_if_already_done ; set -e
+    ssh-keygen -f  "$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.sshkey" -N ""
+    echo root >"$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.sshkey"
+    cat >>"$DATADIR/vmapp-vdc-1box/postcopy.txt" <<EOF
+1box-lxc.netfilter.x86_64.raw.sshkey.pub /root/.ssh/authorized_keys mode=600
+EOF
+) ; prev_cmd_failed
+
+(
     $starting_checks "Build the raw LXC 1box image with ./box-ctl.sh"
     [ -f "$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw" ] ||
 	[ -f "$DATADIR/vmapp-vdc-1box/1box-lxc.netfilter.x86_64.raw.tar.gz" ]
