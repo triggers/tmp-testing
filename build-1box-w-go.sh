@@ -36,7 +36,7 @@ source "$DATADIR/datadir.conf"
     $starting_checks "Clone hansode/vmbuilder from github"
     [ -f "$DATADIR/vmapp-vdc-1box/vmbuilder/.git" ]  # .git a file, because it is a submodule thingy
     $skip_rest_if_already_done ; set -e
-    cd "$DATADIR"
+    cd "$DATADIR/vmapp-vdc-1box"
     make
 ) ; prev_cmd_failed
 
@@ -52,6 +52,6 @@ source "$DATADIR/datadir.conf"
 	[ -f "$lxcimagedir/$i" ] || break -1 2>/dev/null # return error from for loop
     done
     $skip_rest_if_already_done ; set -e
-    cd "$DATADIR"
+    cd "$DATADIR/vmapp-vdc-1box"
     ./prepare-vmimage.sh lxc x86_64
 ) ; prev_cmd_failed
