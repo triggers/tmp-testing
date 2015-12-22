@@ -122,3 +122,27 @@ kvm_is_running()
 	sleep 0.5
     done
 ) ; prev_cmd_failed
+
+ssh_is_active()
+{
+    [[ "$(nc 127.0.0.1 "$SSHPORT" </dev/null)" == *SSH* ]]
+}
+
+: ${WAITFORSSH:=5 2 1 1 1 1 1 1 1 1 10} # set WAITFORSSH to "0" to not wait
+(
+    $starting_checks "Wait for SSH port response"
+    [ "$WAITFORSSH" = "0" ] || kvm_is_running && ssh_is_active
+    $skip_rest_if_already_done
+    WAITFORSSH="${WAITFORSSH/[^0-9 ]/}" # make sure its only a list of integers
+    waitfor="5"
+    while true; do
+	ssh_is_active && break
+	# Note that the </dev/null above is necessary so nc does not
+	# eat the input for the next line
+	read -d ' ' nextwait # read from list
+	[ "$nextwait" == "0" ] && reportfailed "SSH port never became active"
+	[ "$nextwait" != "" ] && waitfor="$nextwait"
+	echo "Waiting for $waitfor seconds for ssh port ($SSHPORT) to become active"
+	sleep "$waitfor"
+    done <<<"$WAITFORSSH"
+)
