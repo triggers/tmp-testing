@@ -99,3 +99,5 @@ EOF
     true
     $skip_rest_if_already_done
 )
+
+"$DATADIR/vmdir/kvm-boot.sh"
