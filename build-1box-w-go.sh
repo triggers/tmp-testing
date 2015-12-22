@@ -101,3 +101,12 @@ EOF
 )
 
 "$DATADIR/vmdir/kvm-boot.sh"
+
+(
+    $starting_checks "Do yum install golang"
+    [ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which go )" = "/usr/bin/go" ]
+    $skip_rest_if_already_done ; set -e
+    # Following this simple blog post: http://itekblog.com/centos-golang/
+    # Note: the vmbuilder scripts already install EPEL repository
+    "$DATADIR/vmdir/ssh-to-kvm.sh" sudo yum instal go
+) ; prev_cmd_failed
