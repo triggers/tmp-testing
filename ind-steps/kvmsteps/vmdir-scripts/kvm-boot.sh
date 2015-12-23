@@ -125,10 +125,11 @@ kvm_is_running()
 
 ssh_is_active()
 {
-    [[ "$(nc 127.0.0.1 "$SSHPORT" </dev/null)" == *SSH* ]]
+    # TODO: make sure this generalizes to different version of nc
+    [[ "$(nc 127.0.0.1 -w 3 "$SSHPORT" </dev/null)" == *SSH* ]]
 }
 
-: ${WAITFORSSH:=5 2 1 1 1 1 1 1 1 1 10} # set WAITFORSSH to "0" to not wait
+: ${WAITFORSSH:=5 2 1 1 1 1 1 1 1 1 5 10 20 30 120} # set WAITFORSSH to "0" to not wait
 (
     $starting_checks "Wait for SSH port response"
     [ "$WAITFORSSH" = "0" ] || kvm_is_running && ssh_is_active

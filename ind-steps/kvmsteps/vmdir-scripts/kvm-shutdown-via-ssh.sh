@@ -40,7 +40,7 @@ kvm_is_running()
 	# Note that the </dev/null above is necessary so nc does not
 	# eat the input for the next line
 	read -d ' ' nextwait # read from list
-	[ "$nextwait" == "0" ] && reportfailed "SSH port never became active"
+	[ "$nextwait" == "0" ] && reportfailed "KVM process did not exit"
 	[ "$nextwait" != "" ] && waitfor="$nextwait"
 	echo "Waiting for $waitfor seconds for KVM process $kvmpid to exit"
 	sleep "$waitfor"
