@@ -145,4 +145,4 @@ ssh_is_active()
 	echo "Waiting for $waitfor seconds for ssh port ($SSHPORT) to become active"
 	sleep "$waitfor"
     done <<<"$WAITFORSSH"
-)
+) ; prev_cmd_failed
