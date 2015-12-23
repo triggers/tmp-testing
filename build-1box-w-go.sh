@@ -108,5 +108,5 @@ EOF
     $skip_rest_if_already_done ; set -e
     # Following this simple blog post: http://itekblog.com/centos-golang/
     # Note: the vmbuilder scripts already install EPEL repository
-    "$DATADIR/vmdir/ssh-to-kvm.sh" sudo yum instal go
+    "$DATADIR/vmdir/ssh-to-kvm.sh" sudo yum -y install go
 ) ; prev_cmd_failed
