@@ -122,6 +122,9 @@ kvm_is_running()
 	sleep 0.5
     done
 ) ; prev_cmd_failed
+source "$DATADIR/datadir.conf"
+SSHPORT=""  MONPORT=""  SERPORT="" # TODO: make this not needed
+calculate_ports
 
 ssh_is_active()
 {
