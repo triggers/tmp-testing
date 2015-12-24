@@ -125,3 +125,39 @@ EOF
     cd "$DATADIR/vmdir/"
     tar czSvf 1box-openvz-w-go.raw.tar.gz 1box-openvz.netfilter.x86_64.raw
 ) ; prev_cmd_failed
+
+(
+    $starting_checks "Expand fresh image from snapshot of image with GO installed"
+    [ -f "$DATADIR/vmdir/1box-openvz.netfilter.x86_64.raw" ]
+    $skip_rest_if_already_done ; set -e
+    cd "$DATADIR/vmdir/"
+    tar xzSvf 1box-openvz-w-go.raw.tar.gz
+) ; prev_cmd_failed
+
+"$DATADIR/vmdir/kvm-boot.sh"
+
+# /home/centos/go/src/github.com/axsh/wakame-vdc/client/terraform-provider-wakamevdc/wakamevdc
+
+(
+    $starting_checks "Initial go dir with wakame-vdc cloned"
+    [ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ] && \
+	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ -d /home/centos/go/src ]'
+    false # temporary hack to make this always run while debugging it
+    $skip_rest_if_already_done ; set -e
+    "$DATADIR/vmdir/ssh-to-kvm.sh" <<EOF
+set -x
+set -e
+mkdir -p go
+export GOPATH=/home/centos/go
+go get -v github.com/axsh/wakame-vdc/ || :
+cd /home/centos/go/src/github.com/axsh/wakame-vdc/
+git checkout terraform-provider
+cd /home/centos/go/src/github.com/axsh/wakame-vdc/client/terraform-provider-wakamevdc/
+go get -v
+cd /home/centos/go/src/github.com/axsh/wakame-vdc/client/terraform-provider-wakamevdc/wakamevdc
+export TF_ACC=something
+export WAKAMEVDC_API_ENDPOINT="http://127.0.0.1:9001/api/12.03/"
+go test -v
+EOF
+) ; prev_cmd_failed
+
