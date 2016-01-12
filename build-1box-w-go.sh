@@ -98,23 +98,25 @@ EOF
 	   "$DATADIR/vmapp-vdc-1box/1box-openvz.netfilter.x86_64.raw.tar.gz"
 )
 
-# TODO: remove this awkwardness of this guard:
-[ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ] || \
+(
+    $starting_group "Install GO language in the OpenVZ 1box image"
+    [ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ]
+    $skip_group_if_unnecessary
+
     "$DATADIR/vmdir/kvm-boot.sh"
 
-(
-    $starting_step "Do yum install golang"
-    [ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ] || \
-	[ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which go )" = "/usr/bin/go" ]
-    $skip_step_if_already_done ; set -e
-    # Following this simple blog post: http://itekblog.com/centos-golang/
-    # Note: the vmbuilder scripts already install EPEL repository
-    "$DATADIR/vmdir/ssh-to-kvm.sh" sudo yum -y install go
-) ; prev_cmd_failed
-
-# TODO: remove this awkwardness of this guard:
-[ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ] || \
+    (
+	$starting_step "Do yum install golang"
+	[ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ] || \
+	    [ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which go )" = "/usr/bin/go" ]
+	$skip_step_if_already_done ; set -e
+	# Following this simple blog post: http://itekblog.com/centos-golang/
+	# Note: the vmbuilder scripts already install EPEL repository
+	"$DATADIR/vmdir/ssh-to-kvm.sh" sudo yum -y install go
+    ) ; prev_cmd_failed
+    
     "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh"
+)
 
 (
     $starting_step "Make snapshot of image with GO installed"
@@ -158,4 +160,3 @@ export WAKAMEVDC_API_ENDPOINT="http://127.0.0.1:9001/api/12.03/"
 go test -v
 EOF
 ) ; prev_cmd_failed
-
