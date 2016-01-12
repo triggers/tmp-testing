@@ -24,9 +24,9 @@ source "$DATADIR/datadir.conf"
 : ${imagesource:=$fullpath}
 
 (
-    $starting_checks "Sanity checks before setting up VM dir"
+    $starting_step "Sanity checks before setting up VM dir"
     false # always do these
-    $skip_rest_if_already_done
+    $skip_step_if_already_done
 
     # ...what sanity checking would be good?
     [ -f "$DATADIR/kvm-boot.sh" ] && reportfailed "Apparently already set up in $DATADIR"
@@ -37,9 +37,9 @@ source "$DATADIR/datadir.conf"
 ) ; prev_cmd_failed
 
 (
-    $starting_checks "Copy initial VM image"
+    $starting_step "Copy initial VM image"
     [ -f "$DATADIR/$IMAGEFILENAME" ]
-    $skip_rest_if_already_done
+    $skip_step_if_already_done
 
     tar xzvf "$imagesource" -C "$DATADIR" >"$DATADIR"/tar.stdout || reportfailed "untaring of image"
     read IMAGEFILENAME rest <"$DATADIR"/tar.stdout
@@ -55,9 +55,9 @@ set -x
 source "$DATADIR/datadir.conf"
 
 (
-    $starting_checks "Copy control scripts to VM directory"
+    $starting_step "Copy control scripts to VM directory"
     [ -f "$DATADIR/kvm-boot.sh" ]
-    $skip_rest_if_already_done
+    $skip_step_if_already_done
     ln -s "$ORGCODEDIR/vmdir-scripts"/* "$DATADIR"
 )
 

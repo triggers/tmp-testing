@@ -23,9 +23,9 @@ kvm_is_running()
 }
 
 (
-    $starting_checks "Killing KVM process"
+    $starting_step "Killing KVM process"
     ! kvm_is_running
-    $skip_rest_if_already_done
+    $skip_step_if_already_done
     set -e
     thepid="$(cat "$DATADIR/runinfo/kvm.pid" 2>/dev/null)"
     marker="$(cat "$DATADIR/runinfo/kvm.marker" 2>/dev/null)"

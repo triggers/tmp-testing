@@ -29,9 +29,9 @@ calculate_ports()
 calculate_ports
 
 (
-    $starting_checks "Find qemu binary"
+    $starting_step "Find qemu binary"
     [ "$KVMBIN" != "" ] && [ -f "$KVMBIN" ]
-    $skip_rest_if_already_done
+    $skip_step_if_already_done
     binlist=(
 	/usr/libexec/qemu-kvm
 	/usr/bin/qemu-kvm
@@ -97,9 +97,9 @@ kvm_is_running()
 }
 
 (
-    $starting_checks "Starting KVM process"
+    $starting_step "Starting KVM process"
     kvm_is_running
-    $skip_rest_if_already_done
+    $skip_step_if_already_done
     set -e
     : ${KVMBIN:?} ${IMAGEFILENAME:?} ${KVMMEM:?}
     : ${VNCPORT:?} ${SSHPORT:?} ${MONPORT:?} ${SERPORT:?}
@@ -134,9 +134,9 @@ ssh_is_active()
 
 : ${WAITFORSSH:=5 2 1 1 1 1 1 1 1 1 5 10 20 30 120} # set WAITFORSSH to "0" to not wait
 (
-    $starting_checks "Wait for SSH port response"
+    $starting_step "Wait for SSH port response"
     [ "$WAITFORSSH" = "0" ] || kvm_is_running && ssh_is_active
-    $skip_rest_if_already_done
+    $skip_step_if_already_done
     WAITFORSSH="${WAITFORSSH/[^0-9 ]/}" # make sure its only a list of integers
     waitfor="5"
     while true; do
