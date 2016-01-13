@@ -54,10 +54,10 @@ DATADIR="$DATADIR" "$ORGCODEDIR/ind-steps/build-1box/build-1box.sh"
 	    "$DATADIR/vmdir/kvm-boot.sh"
 
 	(
-	    $starting_step "Do yum install golang"
+	    $starting_step "Do short set of script lines to install jupyter"
 	    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
 		[ -f "$DATADIR/vmdir/1box-openvz-w-jupyter.raw.tar.gz" ] || \
-		    [ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which jupyter )" = "~/anaconda3/bin/jupyter" ]
+		    [ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which jupyter )" = "/home/centos/anaconda3/bin/jupyter" ]
 		}
 	    $skip_step_if_already_done ; set -e
 
@@ -84,7 +84,7 @@ EOF
     ) ; prev_cmd_failed
 
     (
-	$starting_step "Make snapshot of image with GO installed"
+	$starting_step "Make snapshot of image with jupyter installed"
 	[ -f "$DATADIR/vmdir/1box-openvz-w-jupyter.raw.tar.gz" ]
 	$skip_step_if_already_done ; set -e
 	cd "$DATADIR/vmdir/"
