@@ -30,6 +30,8 @@ DATADIR="$DATADIR" "$ORGCODEDIR/ind-steps/build-1box/build-1box.sh"
     $starting_group "Set up install Jupyter in VM"
     (
 	$starting_group "Set up vmdir"
+	[ -x "$DATADIR/vmdir/kvm-boot.sh" ]
+	$skip_group_if_unnecessary
 	(
 	    $starting_step "Make vmdir"
 	    [ -d "$DATADIR/vmdir" ]
@@ -40,7 +42,7 @@ DATADIR="$DATADIR" "$ORGCODEDIR/ind-steps/build-1box/build-1box.sh"
 	DATADIR="$DATADIR/vmdir" \
 	       "$ORGCODEDIR/ind-steps/kvmsteps/kvm-setup.sh" \
 	       "$DATADIR/vmapp-vdc-1box/1box-openvz.netfilter.x86_64.raw.tar.gz"
-    )
+    ) ; prev_cmd_failed
 
     (
 	$starting_group "Install Jupyter in the OpenVZ 1box image"
@@ -55,7 +57,7 @@ DATADIR="$DATADIR" "$ORGCODEDIR/ind-steps/build-1box/build-1box.sh"
 	    $starting_step "Do yum install golang"
 	    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
 		[ -f "$DATADIR/vmdir/1box-openvz-w-jupyter.raw.tar.gz" ] || \
-		    [ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which go )" = "/usr/bin/go" ]
+		    [ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which TODO )" = "/usr/bin/TODO" ]
 		}
 	    $skip_step_if_already_done ; set -e
 	    echo "TODO!!!!"
