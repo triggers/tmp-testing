@@ -74,8 +74,6 @@ export PATH="/home/centos/anaconda3/bin:$PATH"
 
 conda install -y jupyter
 EOF
-	    
-	    exit 255
 	) ; prev_cmd_failed
 	
 	# TODO: this guard is awkward.
