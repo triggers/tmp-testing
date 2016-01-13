@@ -57,10 +57,24 @@ DATADIR="$DATADIR" "$ORGCODEDIR/ind-steps/build-1box/build-1box.sh"
 	    $starting_step "Do yum install golang"
 	    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
 		[ -f "$DATADIR/vmdir/1box-openvz-w-jupyter.raw.tar.gz" ] || \
-		    [ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which TODO )" = "/usr/bin/TODO" ]
+		    [ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which jupyter )" = "~/anaconda3/bin/jupyter" ]
 		}
 	    $skip_step_if_already_done ; set -e
-	    echo "TODO!!!!"
+
+	    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
+wget https://3230d63b5fc54e62148e-c95ac804525aac4b6dba79b00b39d1d3.ssl.cf1.rackcdn.com/Anaconda3-2.4.1-Linux-x86_64.sh
+
+chmod +x Anaconda3-2.4.1-Linux-x86_64.sh
+
+./Anaconda3-2.4.1-Linux-x86_64.sh -b
+
+echo 'export PATH="/home/centos/anaconda3/bin:$PATH"' >>.bashrc
+
+export PATH="/home/centos/anaconda3/bin:$PATH"
+
+conda install -y jupyter
+EOF
+	    
 	    exit 255
 	) ; prev_cmd_failed
 	
