@@ -88,46 +88,49 @@ EOF
 )
 
 (
-    $starting_group "Set up vmdir"
+    $starting_group "Set up install GO in VM"
     (
-	$starting_step "Make vmdir"
-	[ -d "$DATADIR/vmdir" ]
-	$skip_step_if_already_done ; set -e
-	mkdir "$DATADIR/vmdir"
-    ) ; prev_cmd_failed
-    
-    DATADIR="$DATADIR/vmdir" \
-	   "$ORGCODEDIR/ind-steps/kvmsteps/kvm-setup.sh" \
-	   "$DATADIR/vmapp-vdc-1box/1box-openvz.netfilter.x86_64.raw.tar.gz"
-)
-
-(
-    $starting_group "Install GO language in the OpenVZ 1box image"
-    [ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ]
-    $skip_group_if_unnecessary
-
-    "$DATADIR/vmdir/kvm-boot.sh"
+	$starting_group "Set up vmdir"
+	(
+	    $starting_step "Make vmdir"
+	    [ -d "$DATADIR/vmdir" ]
+	    $skip_step_if_already_done ; set -e
+	    mkdir "$DATADIR/vmdir"
+	) ; prev_cmd_failed
+	
+	DATADIR="$DATADIR/vmdir" \
+	       "$ORGCODEDIR/ind-steps/kvmsteps/kvm-setup.sh" \
+	       "$DATADIR/vmapp-vdc-1box/1box-openvz.netfilter.x86_64.raw.tar.gz"
+    )
 
     (
-	$starting_step "Do yum install golang"
-	[ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ] || \
-	    [ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which go )" = "/usr/bin/go" ]
-	$skip_step_if_already_done ; set -e
-	# Following this simple blog post: http://itekblog.com/centos-golang/
-	# Note: the vmbuilder scripts already install EPEL repository
-	"$DATADIR/vmdir/ssh-to-kvm.sh" sudo yum -y install go
-    ) ; prev_cmd_failed
-    
-    "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh"
-)
+	$starting_group "Install GO language in the OpenVZ 1box image"
+	[ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ]
+	$skip_group_if_unnecessary
 
-(
-    $starting_step "Make snapshot of image with GO installed"
-    [ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ]
-    $skip_step_if_already_done ; set -e
-    cd "$DATADIR/vmdir/"
-    tar czSvf 1box-openvz-w-go.raw.tar.gz 1box-openvz.netfilter.x86_64.raw
-) ; prev_cmd_failed
+	"$DATADIR/vmdir/kvm-boot.sh"
+
+	(
+	    $starting_step "Do yum install golang"
+	    [ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ] || \
+		[ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which go )" = "/usr/bin/go" ]
+	    $skip_step_if_already_done ; set -e
+	    # Following this simple blog post: http://itekblog.com/centos-golang/
+	    # Note: the vmbuilder scripts already install EPEL repository
+	    "$DATADIR/vmdir/ssh-to-kvm.sh" sudo yum -y install go
+	) ; prev_cmd_failed
+	
+	"$DATADIR/vmdir/kvm-shutdown-via-ssh.sh"
+    )
+
+    (
+	$starting_step "Make snapshot of image with GO installed"
+	[ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ]
+	$skip_step_if_already_done ; set -e
+	cd "$DATADIR/vmdir/"
+	tar czSvf 1box-openvz-w-go.raw.tar.gz 1box-openvz.netfilter.x86_64.raw
+    ) ; prev_cmd_failed
+)
 
 (
     $starting_step "Expand fresh image from snapshot of image with GO installed"
