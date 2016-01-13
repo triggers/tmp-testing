@@ -108,19 +108,25 @@ EOF
 	[ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ]
 	$skip_group_if_unnecessary
 
-	"$DATADIR/vmdir/kvm-boot.sh"
+	# TODO: this guard is awkward.
+	[ -x "$DATADIR/vmdir/kvm-boot.sh" ] && \
+	    "$DATADIR/vmdir/kvm-boot.sh"
 
 	(
 	    $starting_step "Do yum install golang"
-	    [ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ] || \
-		[ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which go )" = "/usr/bin/go" ]
+	    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+		[ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ] || \
+		    [ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which go )" = "/usr/bin/go" ]
+		}
 	    $skip_step_if_already_done ; set -e
 	    # Following this simple blog post: http://itekblog.com/centos-golang/
 	    # Note: the vmbuilder scripts already install EPEL repository
 	    "$DATADIR/vmdir/ssh-to-kvm.sh" sudo yum -y install go
 	) ; prev_cmd_failed
 	
-	"$DATADIR/vmdir/kvm-shutdown-via-ssh.sh"
+	# TODO: this guard is awkward.
+	[ -x "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh" ] && \
+	    "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh"
     )
 
     (
@@ -140,14 +146,16 @@ EOF
     tar xzSvf 1box-openvz-w-go.raw.tar.gz
 ) ; prev_cmd_failed
 
-"$DATADIR/vmdir/kvm-boot.sh"
+# TODO: this guard is awkward.
+[ -x "$DATADIR/vmdir/kvm-boot.sh" ] && \
+    "$DATADIR/vmdir/kvm-boot.sh"
 
 # /home/centos/go/src/github.com/axsh/wakame-vdc/client/terraform-provider-wakamevdc/wakamevdc
 
 (
     $starting_step "Initial go dir with wakame-vdc cloned"
     [ -f "$DATADIR/vmdir/1box-openvz-w-go.raw.tar.gz" ] && \
-	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ -d /home/centos/go/src ]'
+	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ -d /home/centos/go/src ]' 2>/dev/null
     false # temporary hack to make this always run while debugging it
     $skip_step_if_already_done ; set -e
     "$DATADIR/vmdir/ssh-to-kvm.sh" <<EOF

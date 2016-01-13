@@ -18,9 +18,9 @@ source "$ORGCODEDIR/simple-defaults-for-bashsteps.source"
 
 # avoids errors on first run, but maybe not good to change state
 # outside of a step
-touch "$DATADIR/datadir.conf"
+touch "$DATADIR/datadir.conf" 2>/dev/null
 
-source "$DATADIR/datadir.conf"
+source "$DATADIR/datadir.conf" 2>/dev/null
 : ${imagesource:=$fullpath}
 
 (
@@ -52,7 +52,7 @@ set -x
 	chmod 600 "$DATADIR/sshkey" ; }
     exit 0
 ) ; prev_cmd_failed
-source "$DATADIR/datadir.conf"
+source "$DATADIR/datadir.conf" 2>/dev/null
 
 (
     $starting_step "Copy control scripts to VM directory"
