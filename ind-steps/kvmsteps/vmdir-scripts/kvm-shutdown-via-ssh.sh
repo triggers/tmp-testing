@@ -28,7 +28,7 @@ kvm_is_running()
     "$DATADIR/ssh-to-kvm.sh" sudo shutdown -h now
 ) ; prev_cmd_failed
 
-: ${WAITFORSHUTDOWN:=2 2 2 2 2 5 10 20 30 60} # set WAITFORSHUTDOWN to "0" to not wait
+: ${WAITFORSHUTDOWN:=5 5 2 2 2 5 5 10 10 30 60} # set WAITFORSHUTDOWN to "0" to not wait
 (
     $starting_step "Wait for KVM to exit"
     [ "$WAITFORSHUTDOWN" = "0" ] || ! kvm_is_running
