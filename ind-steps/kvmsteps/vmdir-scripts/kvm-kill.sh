@@ -1,6 +1,6 @@
 #!/bin/bash
 
-reportfailed()		      
+reportfailed()
 {
     echo "Script failed...exiting. ($*)" 1>&2
     exit 255

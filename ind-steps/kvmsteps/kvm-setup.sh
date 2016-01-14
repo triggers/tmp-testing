@@ -1,6 +1,6 @@
 #!/bin/bash
 
-reportfailed()		      
+reportfailed()
 {
     echo "Script failed...exiting. ($*)" 1>&2
     exit 255
@@ -31,7 +31,7 @@ source "$DATADIR/datadir.conf" 2>/dev/null
     # ...what sanity checking would be good?
     [ -f "$DATADIR/kvm-boot.sh" ] && reportfailed "Apparently already set up in $DATADIR"
     [ -d "$DATADIR" ] || reportfailed "No directory found at DATADIR=$DATADIR"
-    
+
     # Assumption just to get things going...
     [[ "$imagesource" == *.tar.gz ]] || reportfailed "Expecting .tar.gz file."
 ) ; prev_cmd_failed
@@ -60,4 +60,3 @@ source "$DATADIR/datadir.conf" 2>/dev/null
     $skip_step_if_already_done
     ln -s "$ORGCODEDIR/vmdir-scripts"/* "$DATADIR"
 )
-

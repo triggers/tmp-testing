@@ -1,6 +1,6 @@
 #!/bin/bash
 
-reportfailed()		      
+reportfailed()
 {
     echo "Script failed...exiting. ($*)" 1>&2
     exit 255
@@ -38,7 +38,7 @@ DATADIR="$DATADIR" "$ORGCODEDIR/ind-steps/build-1box/build-1box.sh"
 	    $skip_step_if_already_done ; set -e
 	    mkdir "$DATADIR/vmdir"
 	) ; prev_cmd_failed
-	
+
 	DATADIR="$DATADIR/vmdir" \
 	       "$ORGCODEDIR/ind-steps/kvmsteps/kvm-setup.sh" \
 	       "$DATADIR/vmapp-vdc-1box/1box-openvz.netfilter.x86_64.raw.tar.gz"
@@ -89,7 +89,7 @@ pip install bash_kernel
 python -m bash_kernel.install
 EOF
 	) ; prev_cmd_failed
-	
+
 	# TODO: this guard is awkward.
 	[ -x "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh" ] && \
 	    "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh"

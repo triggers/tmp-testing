@@ -23,7 +23,7 @@
 # to the directory of the link, not final target of the link.
 
 if ! declare -f reportfailed >/dev/null; then
-    reportfailed()		      
+    reportfailed()
     {
 	echo "Script failed...exiting. ($*)" 1>&2
 	exit 255
