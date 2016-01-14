@@ -58,7 +58,7 @@ DATADIR="$DATADIR" "$ORGCODEDIR/ind-steps/build-1box/build-1box.sh"
 	    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
 		[ -f "$DATADIR/vmdir/1box-openvz-w-jupyter.raw.tar.gz" ] || \
 		    [ "$("$DATADIR/vmdir/ssh-to-kvm.sh" which jupyter 2>/dev/null)" = "/home/centos/anaconda3/bin/jupyter" ]
-		}
+	    }
 	    $skip_step_if_already_done ; set -e
 
 	    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
@@ -73,6 +73,20 @@ echo 'export PATH="/home/centos/anaconda3/bin:$PATH"' >>.bashrc
 export PATH="/home/centos/anaconda3/bin:$PATH"
 
 conda install -y jupyter
+EOF
+	) ; prev_cmd_failed
+
+	(
+	    $starting_step "Install bash_kernel"
+	    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+		[ -f "$DATADIR/vmdir/1box-openvz-w-jupyter.raw.tar.gz" ] || \
+		    "$DATADIR/vmdir/ssh-to-kvm.sh" '[ -d ./anaconda3/lib/python3.5/site-packages/bash_kernel ]' 2>/dev/null
+	    }
+	    $skip_step_if_already_done; set -e
+
+	    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
+pip install bash_kernel
+python -m bash_kernel.install
 EOF
 	) ; prev_cmd_failed
 	
