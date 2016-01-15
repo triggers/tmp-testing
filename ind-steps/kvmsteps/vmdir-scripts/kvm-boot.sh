@@ -18,7 +18,7 @@ source "$DATADIR/datadir.conf"
 [ -d "$DATADIR/runinfo" ] || mkdir "$DATADIR/runinfo"
 : ${KVMMEM:=1024}
 : ${VNCPORT:=$(( 11100 - 5900 ))}
-
+# Note: EXTRAHOSTFWD can be set to something like ",hostfwd=tcp::$18080-:8888"
 calculate_ports()
 {
     echo ${VNCPORT} >"$DATADIR/runinfo/port.vnc"
@@ -65,7 +65,7 @@ calculate_ports
 	    -device virtio-blk-pci,id=vol-tu3y7qj4,drive=vol-tu3y7qj4-drive,bootindex=0,bus=pci.0,addr=0x4
 
 	    -net nic,vlan=0,macaddr=52:54:00:65:28:dd,model=virtio,addr=10
-	    -net user,vlan=0,hostfwd=tcp::$SSHPORT-:22
+	    -net user,vlan=0,hostfwd=tcp::$SSHPORT-:22$EXTRAHOSTFWD
 EOF
     }
 
@@ -84,7 +84,7 @@ EOF
 		SSHPORT=""  MONPORT=""  SERPORT=""
 		calculate_ports
 
-		# value is saved, so VM will attempt to use same ports next time
+		# value is saved, so that the VM will attempt to use same ports next time
 		echo "VNCPORT=$VNCPORT" >>"$DATADIR/datadir.conf"
 		return 0 # yes, a port collision, so retry
 	    fi

@@ -91,7 +91,7 @@ EOF
 	) ; prev_cmd_failed
 
 	(
-	    $starting_step "Do short set default password for jupyter"
+	    $starting_step "Set default password for jupyter"
 	    JCFG="/home/centos/.jupyter/jupyter_notebook_config.py"
 	    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
 		[ -f "$DATADIR/vmdir/1box-openvz-w-jupyter.raw.tar.gz" ] || \
@@ -99,17 +99,20 @@ EOF
 	    }
 	    $skip_step_if_already_done ; set -e
 
+	    # http://jupyter-notebook.readthedocs.org/en/latest/public_server.html
 	    "$DATADIR/vmdir/ssh-to-kvm.sh" <<EOF
 set -x
 [ -f "$JCFG" ] || jupyter notebook --generate-config
 saltpass="\$(echo $'from notebook.auth import passwd\nprint(passwd("${JUPYTER_PASSWORD:=warmwinter}"))' | python)"
 echo "c.NotebookApp.password = '\$saltpass'" >>"$JCFG"
+echo "c.NotebookApp.ip = '*'" >>/home/centos/.jupyter/jupyter_notebook_config.py
 EOF
 	) ; prev_cmd_failed
 
 	# TODO: this guard is awkward.
 	[ -x "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh" ] && \
 	    "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh"
+	true # needed so the group does not throw an error because of the awkwardness in the previous command
     ) ; prev_cmd_failed
 
     (
