@@ -174,7 +174,7 @@ EOS
 	    $starting_step "Install sshkey into Wakame-vdc database"
 	    echo "select * from ssh_key_pairs; " | \
 		"$DATADIR/vmdir/ssh-to-kvm.sh" mysql -u root wakame_dcmgr 2>/dev/null | \
-		grep cicddemo
+		grep cicddemo >/dev/null
 	    $skip_step_if_already_done
 	    (
 		declare -f do_register_keypair
@@ -182,6 +182,29 @@ EOS
 	    ) | "$DATADIR/vmdir/ssh-to-kvm.sh"
 	    # this step was adapted from code at:
 	    # https://github.com/axsh/nii-image-and-enshuu-scripts/blob/changes-for-the-2nd-class/wakame-bootstrap/wakame-vdc-install-hierarchy.sh#L426-L477
+	)
+	
+	(
+	    $starting_step "Install security group into Wakame-vdc database"
+	    echo "select * from security_groups; " | \
+		"$DATADIR/vmdir/ssh-to-kvm.sh" mysql -u root wakame_dcmgr 2>/dev/null | \
+		grep cicddemo >/dev/null
+	    $skip_step_if_already_done
+	    "$DATADIR/vmdir/ssh-to-kvm.sh" \
+		/opt/axsh/wakame-vdc/dcmgr/bin/vdc-manage securitygroup add \
+					      --uuid sg-cicddemo \
+					      --account-id a-shpoolxx \
+					      --description cicddemo \
+					      --service-type std \
+					      --display-name cicddemo \
+					      --rule - <<EOS
+icmp:-1,-1,ip4:0.0.0.0/0
+tcp:22,22,ip4:0.0.0.0/0
+tcp:80,80,ip4:0.0.0.0/0
+tcp:8080,8080,ip4:0.0.0.0/0
+EOS
+	    # this step was adapted from code at:
+	    # https://github.com/axsh/nii-image-and-enshuu-scripts/blob/changes-for-the-2nd-class/wakame-bootstrap/wakame-vdc-install-hierarchy.sh#L486-L506
 	)
 	
 	# TODO: this guard is awkward.
