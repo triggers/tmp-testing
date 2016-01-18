@@ -38,6 +38,8 @@ source "$DATADIR/datadir.conf" 2>/dev/null
 
 (
     $starting_step "Copy initial VM image"
+    # the next line conveniently fails if $IMAGEFILENAME is null, but points
+    # to something awkward that needs some thought (TODO)
     [ -f "$DATADIR/$IMAGEFILENAME" ]
     $skip_step_if_already_done
 
