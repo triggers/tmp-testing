@@ -26,6 +26,9 @@ source "$DATADIR/datadir.conf"
 
 (
     $starting_group "Build fresh openvz 1box image"
+    [ -f "$DATADIR/vmapp-vdc-1box/1box-openvz.netfilter.x86_64.raw.sshkey" ] && \
+	[ -f "$DATADIR/vmapp-vdc-1box/1box-openvz.netfilter.x86_64.raw.tar.gz" ]
+    $skip_group_if_unnecessary
     (
 	$starting_step "Clone axsh/vmapp-vdc-1box from github"
 	[ -d "$DATADIR/vmapp-vdc-1box/.git" ]
