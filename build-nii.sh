@@ -233,3 +233,14 @@ EOS
 # TODO: this guard is awkward.
 [ -x "$DATADIR/vmdir/kvm-boot.sh" ] && \
     "$DATADIR/vmdir/kvm-boot.sh"
+
+(
+    $starting_step "Synchronize notebooks/ to VM"
+    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ "$(ls notebooks)" != "" ]' 2>/dev/null
+    }
+    $skip_step_if_already_done; set -e
+
+    "$DATADIR/notebooks-sync.sh" tovm
+
+) ; prev_cmd_failed
