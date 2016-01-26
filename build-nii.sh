@@ -38,7 +38,7 @@ DATADIR="$DATADIR" "$ORGCODEDIR/ind-steps/build-1box/build-1box.sh"
 	    $skip_step_if_already_done ; set -e
 	    mkdir "$DATADIR/vmdir"
 	    # increase default mem to give room for a wakame instance or two
-	    echo ': ${KVMMEM:=2048}' >>"$DATADIR/vmdir/datadir.conf"
+	    echo ': ${KVMMEM:=4096}' >>"$DATADIR/vmdir/datadir.conf"
 	) ; prev_cmd_failed
 
 	DATADIR="$DATADIR/vmdir" \
