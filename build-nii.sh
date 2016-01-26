@@ -244,3 +244,23 @@ EOS
     "$DATADIR/notebooks-sync.sh" tovm bin
     "$DATADIR/notebooks-sync.sh" tovm
 ) ; prev_cmd_failed
+
+(
+    $starting_step "Setup .ssh/config"
+    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ -f ~/.ssh/config ]' 2>/dev/null
+    }
+    $skip_step_if_already_done; set -e
+
+	    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
+sudo chown centos:centos ~/.ssh # fix to bug in vmbuilder??
+chmod 700 ~/.ssh
+cat >~/.ssh/config <<EEE
+Host *
+  StrictHostKeyChecking no
+  TCPKeepAlive yes
+  UserKnownHostsFile /dev/null
+  ForwardAgent yes
+EEE
+EOF
+) ; prev_cmd_failed
