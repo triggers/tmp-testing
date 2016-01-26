@@ -241,6 +241,6 @@ EOS
     }
     $skip_step_if_already_done; set -e
 
+    "$DATADIR/notebooks-sync.sh" tovm bin
     "$DATADIR/notebooks-sync.sh" tovm
-
 ) ; prev_cmd_failed
