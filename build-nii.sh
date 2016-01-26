@@ -246,7 +246,7 @@ EOS
 ) ; prev_cmd_failed
 
 (
-    $starting_step "Setup .ssh/config"
+    $starting_step "Setup .ssh/config and .musselrc"
     [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
 	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ -f ~/.ssh/config ]' 2>/dev/null
     }
@@ -261,6 +261,11 @@ Host *
   TCPKeepAlive yes
   UserKnownHostsFile /dev/null
   ForwardAgent yes
+EEE
+
+cat >~/.musselrc <<EEE
+DCMGR_HOST=127.0.0.1
+account_id=a-shpoolxx
 EEE
 EOF
 ) ; prev_cmd_failed
