@@ -207,6 +207,33 @@ EOS
 	    # https://github.com/axsh/nii-image-and-enshuu-scripts/blob/changes-for-the-2nd-class/wakame-bootstrap/wakame-vdc-install-hierarchy.sh#L486-L506
 	)
 	
+	(
+	    $starting_step "Hack Wakame-vdc to always set openvz's privvmpages to unlimited"
+	    rubysource=/opt/axsh/wakame-vdc/dcmgr/lib/dcmgr/drivers/hypervisor/linux_hypervisor/linux_container/openvz.rb
+	    "$DATADIR/vmdir/ssh-to-kvm.sh" sudo grep 'privvmpage.*unlimited' "$rubysource" 1>/dev/null 2>&1
+	    $skip_step_if_already_done
+	    (
+		cat <<EOF
+	    rubysource='$rubysource'
+EOF
+		cat <<'EOF'
+            sudo cp "$rubysource" /tmp/ # for debugging
+	    orgcode="$(sudo cat "$rubysource")"
+            # original line: sh("vzctl set %s --privvmpage %s --save",[hc.inst_id, (inst[:memory_size] * 256)])
+	    replaceme='vzctl set %s --privvmpage'
+	    while IFS= read -r ln; do
+		  if [[ "$ln" == *${replaceme}* ]]; then
+                     echo "## $ln"
+                     echo '        sh("vzctl set %s --privvmpage unlimited --save",[hc.inst_id])'
+                     cat # copy the rest unchanged
+                     break
+		  fi
+		  echo "$ln"
+	    done <<<"$orgcode" | sudo bash -c "cat >'$rubysource'"
+EOF
+	    ) | "$DATADIR/vmdir/ssh-to-kvm.sh"
+	)
+	
 	# TODO: this guard is awkward.
 	[ -x "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh" ] && \
 	    "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh"
