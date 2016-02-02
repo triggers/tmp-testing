@@ -1,0 +1,129 @@
+(
+exec 9<&1
+echo $$ >/tmp/bpid
+
+echopat='*echo $?*'
+
+# The code below seems to work, but it may be sensitive to
+# the timeout and sleep values.  Hopefully it works well enough
+# until we have time to modify the bash_kernel code.
+
+blockingread()
+{
+   while sleep 0.2; do
+      IFS= read -r ln
+      if [[ "$ln" == $echopat ]]; then
+         # give Jupyter a return code when it asks for one
+         echo "0" >&9
+         echo -n "$PS1" >&9
+         continue
+      fi
+      [ "$ln" = "" ] && continue
+      break
+   done
+}
+
+readcell() {
+    blockingread
+    echo "$ln"
+    echo -n "$PS2">&9
+    # read rest of the cell contents
+    while IFS= read -t 0.2 -r lnr; do
+      ## somehow get make this next line unnecessary!!!
+      [[ "$lnr" == *endofcell* ]] && break
+      echo "$lnr"
+      # The problem is this next line.  Jupyter will not send the next line unless
+      # PS2 is sent.  But if there are no more lines, then Jupyter will block.
+      # Therefore, it is necessary to modify the bash_kernel code to remove the
+      # requirement for the endofcell marker.
+      echo -n "$PS2">&9
+    done
+}
+
+echo "Ready."
+echo -n "$PS1"
+
+basedir="$(pwd)"
+new_job_dir()
+{
+    mkdir -p "$basedir/jobs"
+    jobn=1000
+    while [ -d "$basedir/jobs/j-$jobn" ]; do
+        (( jobn++ ))
+        sleep 0.2 # use only when debugging
+    done
+    mkdir "$basedir/jobs/j-$jobn"
+    echo "$basedir/jobs/j-$jobn"
+}
+
+get_step_id()
+{
+    # first line of the form: # (
+    pat='#(*'
+    while read ln; do
+        nospaces="${ln// /}"
+        if [[ "$nospaces" == $pat ]]; then
+            afterparen="${nospaces#*\(}"
+            id="${afterparen%%\)*}"
+            echo "$id"
+            return 0
+        fi
+    done <<<"$1"
+    return 255
+}
+
+get_cell_command()
+{
+    # first line of the form: # token1 token2 token3
+    # where token1 is a file name in the ./stepdefs directory.
+    id="$1"
+    inputtoscan="$2"
+    pat='#*'
+    while read ln; do
+        if [[ "$ln" == $pat ]]; then
+            read commentchar token1 othertokens <<<"${ln}"
+            script_path="$basedir/stepdefs/s-$id/$token1.sh"
+            if [ -f "$script_path" ]; then
+                echo "$script_path $othertokens"
+                return 0
+            fi
+        fi
+    done <<<"$inputtoscan"
+    return 255
+}
+
+# for testing:
+while sleep 0.2; do
+    ls -l /proc/$BASHPID/fd >>/tmp/sbash.log
+    input="$(readcell)"
+    if [[ "$input" = *quit* ]]; then
+      echo "bye"
+      # the PS1 will be sent by the parent bash (the one created by jupyter)
+      break
+    fi
+
+    jd="$(new_job_dir)"
+    echo "$input" >"$jd/input"
+
+    didcmd=false
+    if stepid="$(get_step_id "$input")"; then
+        # set -x
+        stepdir="$basedir/stepdefs/s-$stepid"
+        if [ -d "$stepdir" ]; then
+            if command="$(get_cell_command "$stepid" "$input")"; then
+                echo "$command" >"$jd/command"
+                echo "$input" | bash $command >"$jd/output" 2>&1
+                echo "$?" >"$jd/rc"
+                didcmd=true
+            fi
+        fi
+    fi
+    if ! $didcmd; then
+        # for default, execute code like normal bash cell
+        bash "$jd/input" >"$jd/output" 2>&1
+        echo "$?" >"$jd/rc"
+    fi
+    echo "$(cat "$jd/output")"
+    echo -n "$PS1"
+done
+)
