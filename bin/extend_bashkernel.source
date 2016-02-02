@@ -31,6 +31,7 @@ readcell() {
     while IFS= read -t 0.2 -r lnr; do
       ## somehow get make this next line unnecessary!!!
       [[ "$lnr" == *endofcell* ]] && break
+      [[ "$lnr" == \#.* ]] && break
       echo "$lnr"
       # The problem is this next line.  Jupyter will not send the next line unless
       # PS2 is sent.  But if there are no more lines, then Jupyter will block.
@@ -127,3 +128,4 @@ while sleep 0.2; do
     echo -n "$PS1"
 done
 )
+
