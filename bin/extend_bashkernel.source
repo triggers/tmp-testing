@@ -62,7 +62,6 @@ new_job_dir()
     jobn=1000
     while [ -d "$basedir/jobs/j-$jobn" ]; do
         (( jobn++ ))
-        sleep 0.2 # use only when debugging
     done
     mkdir "$basedir/jobs/j-$jobn"
     echo "$basedir/jobs/j-$jobn"
