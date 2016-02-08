@@ -6,6 +6,10 @@
 (
 export already_loaded=true
 
+# Keep an open file descriptor on this source file so we can
+# use lsof to track down processes that do not exit properly.
+exec 77<"$BASH_SOURCE"
+
 exec 9<&1
 echo $$ >/tmp/bpid
 
