@@ -1,4 +1,11 @@
+[ "$already_loaded" = "" ] || {
+    echo "Already Loaded"
+    return
+}
+
 (
+export already_loaded=true
+
 exec 9<&1
 echo $$ >/tmp/bpid
 
