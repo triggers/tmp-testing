@@ -3,8 +3,12 @@
     return
 }
 
+set +m
 (
 export already_loaded=true
+
+exec 0<&1 # undo automatic setting of fd0 to /dev/null
+trap 'fakesigint=true' USR1
 
 # Keep an open file descriptor on this source file so we can
 # use lsof to track down processes that do not exit properly.
@@ -39,10 +43,12 @@ readcell() {
     echo "$ln"
     echo -n "$PS2">&9
     # read rest of the cell contents
+    fakesigint=false
     while IFS= read -t 0.2 -r lnr; do
       ## somehow get make this next line unnecessary!!!
       [[ "$lnr" == *endofcell* ]] && break
       [[ "$lnr" == \#.* ]] && break
+      $fakesigint && break
       echo "$lnr"
       # The problem is this next line.  Jupyter will not send the next line unless
       # PS2 is sent.  But if there are no more lines, then Jupyter will block.
@@ -138,5 +144,15 @@ while sleep 0.2; do
     echo "$(cat "$jd/output")"
     echo -n "$PS1"
 done
-)
+)  &
+
+inputpid="$!"
+trap 'date >>/tmp/debugint ;  kill -USR1 $inputpid' INT
+
+while  [ -d /proc/$inputpid ]; do
+    wait
+done
+
+set -m
+trap '' INT
 
