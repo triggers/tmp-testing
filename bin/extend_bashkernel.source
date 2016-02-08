@@ -92,12 +92,13 @@ get_cell_command()
     pat='#*'
     while read ln; do
         if [[ "$ln" == $pat ]]; then
-            read commentchar token1 othertokens <<<"${ln}"
-            script_path="$basedir/stepdefs/s-$id/$token1.sh"
-            if [ -f "$script_path" ]; then
-                echo "$script_path $othertokens"
-                return 0
-            fi
+            read commentchars ln <<<"${ln}"
+	fi
+        read token1 othertokens <<<"${ln}"
+        script_path="$basedir/stepdefs/s-$id/$token1.sh"
+        if [ -f "$script_path" ]; then
+            echo "$script_path $othertokens"
+            return 0
         fi
     done <<<"$inputtoscan"
     return 255
