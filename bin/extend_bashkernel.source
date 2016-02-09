@@ -62,12 +62,17 @@ readcell_inline()
     # read rest of the cell contents
     echo SIG-startloop0 >>/tmp/usr1
     while true; do
-	IFS= read -t 0.2 -r lnr 
+	IFS= read -t 0.2 -r lnr
+	rc="$?"
+	{ read -t 0 f && read f  && echo "$f",SIG >>/tmp/usr1 ;  } 0<&92 && [[ "$f" == *fakesigint* ]] && break
+	[ "$rc" -gt 128 ] && { # timeout
+            echo SIG-readerror >>/tmp/usr1
+	    continue
+	}
         echo SIG-startloop1 >>/tmp/usr1
 	## if message sent on pipe && the message is fakesigint && break
-	{ read -t 0 f && read f  && echo "$f",SIG >>/tmp/usr1 ;  } 0<&92 && [[ "$f" == *fakesigint* ]] && break
 
-	[ "$lnr" = "" ] && sleep 0.5 && continue
+#	[ "$lnr" = "" ] && sleep 0.5 && continue
 	## somehow get make this next line unnecessary!!!
 	[[ "$lnr" == *endofcell* ]] && break
 	[[ "$lnr" == \#.* ]] && break
