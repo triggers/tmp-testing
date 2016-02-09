@@ -7,8 +7,18 @@ set +m
 (
 export already_loaded=true
 
+mkpipe()
+{
+    tmpfifo=/tmp/tmpfifo-$$-$RANDOM
+    mkfifo "$tmpfifo"
+    exec 92< <(cat "$tmpfifo")
+    exec 91>"$tmpfifo"
+    rm -f "$tmpfifo"
+}
+mkpipe
+
 exec 0<&1 # undo automatic setting of fd0 to /dev/null
-trap 'fakesigint=true' USR1
+trap 'date >>/tmp/usr1 ; echo fakesigint >&91' USR1
 
 # Keep an open file descriptor on this source file so we can
 # use lsof to track down processes that do not exit properly.
@@ -43,19 +53,25 @@ readcell() {
     echo "$ln"
     echo -n "$PS2">&9
     # read rest of the cell contents
-    fakesigint=false
-    while IFS= read -t 0.2 -r lnr; do
+    echo SIG-startloop0 >>/tmp/usr1
+    while IFS= read -t 0.2 -r lnr || true; do
+        echo SIG-startloop1 >>/tmp/usr1
+    [ "$lnr" = "" ] && sleep 0.5 && continue
       ## somehow get make this next line unnecessary!!!
       [[ "$lnr" == *endofcell* ]] && break
       [[ "$lnr" == \#.* ]] && break
-      $fakesigint && break
+      ## if message sent on pipe && the message is fakesigint && break
+      { read -t 0 f && read f  && echo "$f",SIG >>/tmp/usr1 ;  } 0<&92 && [[ "$f" == *fakesigint* ]] && break
       echo "$lnr"
       # The problem is this next line.  Jupyter will not send the next line unless
       # PS2 is sent.  But if there are no more lines, then Jupyter will block.
       # Therefore, it is necessary to modify the bash_kernel code to remove the
       # requirement for the endofcell marker.
       echo -n "$PS2">&9
+              echo SIG-endloop1 >>/tmp/usr1
+	      lnr=''
     done
+    echo SIG-readcell >>/tmp/usr1
 }
 
 echo "Ready."
@@ -113,6 +129,9 @@ get_cell_command()
 # for testing:
 while sleep 0.2; do
     ls -l /proc/$BASHPID/fd >>/tmp/sbash.log
+    ## TODO: Tracing shows delivery of USR1 signal is delayed. It is probably
+    ## because signal delivery is blocked until the process started on the
+    ## next line exits.
     input="$(readcell)"
     if [[ "$input" = *quit* ]]; then
       echo "bye"
