@@ -1,3 +1,9 @@
+## This version seems to work, but Jupyter ignores all output after
+## sending SIGINT.  Therefore, our cell code is processed properly
+## without "#." and generates output, but this output is ignored and
+## not displayed on the notebook.  TODO: modify pexpect code.
+## ((Adding "#." is still supported and then output shows))
+
 [ "$already_loaded" = "" ] || {
     echo "Already Loaded"
     return
@@ -18,7 +24,7 @@ mkpipe()
 mkpipe
 
 exec 0<&1 # undo automatic setting of fd0 to /dev/null
-trap 'date >>/tmp/usr1 ; echo fakesigint >&91' USR1
+trap 'echo received-usr1 >>/tmp/usr1 ; echo fakesigint >&91' USR1
 
 # Keep an open file descriptor on this source file so we can
 # use lsof to track down processes that do not exit properly.
@@ -48,30 +54,38 @@ blockingread()
    done
 }
 
-readcell() {
+readcell_inline()
+{
     blockingread
-    echo "$ln"
+    input="$ln"
     echo -n "$PS2">&9
     # read rest of the cell contents
     echo SIG-startloop0 >>/tmp/usr1
-    while IFS= read -t 0.2 -r lnr || true; do
+    while true; do
+	IFS= read -t 0.2 -r lnr 
         echo SIG-startloop1 >>/tmp/usr1
-    [ "$lnr" = "" ] && sleep 0.5 && continue
-      ## somehow get make this next line unnecessary!!!
-      [[ "$lnr" == *endofcell* ]] && break
-      [[ "$lnr" == \#.* ]] && break
-      ## if message sent on pipe && the message is fakesigint && break
-      { read -t 0 f && read f  && echo "$f",SIG >>/tmp/usr1 ;  } 0<&92 && [[ "$f" == *fakesigint* ]] && break
-      echo "$lnr"
-      # The problem is this next line.  Jupyter will not send the next line unless
-      # PS2 is sent.  But if there are no more lines, then Jupyter will block.
-      # Therefore, it is necessary to modify the bash_kernel code to remove the
-      # requirement for the endofcell marker.
-      echo -n "$PS2">&9
-              echo SIG-endloop1 >>/tmp/usr1
-	      lnr=''
+	## if message sent on pipe && the message is fakesigint && break
+	{ read -t 0 f && read f  && echo "$f",SIG >>/tmp/usr1 ;  } 0<&92 && [[ "$f" == *fakesigint* ]] && break
+
+	[ "$lnr" = "" ] && sleep 0.5 && continue
+	## somehow get make this next line unnecessary!!!
+	[[ "$lnr" == *endofcell* ]] && break
+	[[ "$lnr" == \#.* ]] && break
+	input="${input}"$'\n'"${lnr}"
+	# The problem is this next line.  Jupyter will not send the next line unless
+	# PS2 is sent.  But if there are no more lines, then Jupyter will block.
+	# Therefore, it is necessary to modify the bash_kernel code to remove the
+	# requirement for the endofcell marker.
+	echo -n "$PS2">&9
+        echo SIG-endloop1 >>/tmp/usr1
+	lnr=''
     done
     echo SIG-readcell >>/tmp/usr1
+}
+
+readcell() # not used yet
+{
+    echo "$(readcell_inline; echo "$input")"
 }
 
 echo "Ready."
@@ -132,7 +146,7 @@ while sleep 0.2; do
     ## TODO: Tracing shows delivery of USR1 signal is delayed. It is probably
     ## because signal delivery is blocked until the process started on the
     ## next line exits.
-    input="$(readcell)"
+    readcell_inline
     if [[ "$input" = *quit* ]]; then
       echo "bye"
       # the PS1 will be sent by the parent bash (the one created by jupyter)
@@ -166,12 +180,12 @@ done
 )  &
 
 inputpid="$!"
-trap 'date >>/tmp/debugint ;  kill -USR1 $inputpid' INT
+trap 'echo sent-usr1-$inputpid >>/tmp/usr1 ;  kill -USR1 $inputpid' INT
 
 while  [ -d /proc/$inputpid ]; do
     wait
 done
 
 set -m
-trap '' INT
+trap - INT
 
