@@ -59,6 +59,39 @@ class BashKernel(Kernel):
         # Register Bash function to write image data to temporary file
         self.bashwrapper.run_command(image_setup_cmd)
 
+    def nii_run_command(self, command, timeout=-1):
+        """Send a command to the REPL, wait for and return output.
+
+        :param str command: The command to send. Trailing newlines are not needed.
+          This should be a complete block of input that will trigger execution;
+          if a continuation prompt is found after sending input, :exc:`ValueError`
+          will be raised.
+        :param int timeout: How long to wait for the next prompt. -1 means the
+          default from the :class:`pexpect.spawn` object (default 30 seconds).
+          None means to wait indefinitely.
+        """
+        # Split up multiline commands and feed them in bit-by-bit
+        cmdlines = command.splitlines()
+        # splitlines ignores trailing newlines - add it back in manually
+        if command.endswith('\n'):
+            cmdlines.append('')
+        if not cmdlines:
+            raise ValueError("No command was given")
+
+        self.child.sendline(cmdlines[0])
+        for line in cmdlines[1:]:
+            self._expect_prompt(timeout=1)
+            self.child.sendline(line)
+
+        # Command was fully submitted, now wait for the next prompt
+        if self._expect_prompt(timeout=timeout) == 1:
+            # We got the continuation prompt - command was incomplete
+            self.child.kill(signal.SIGINT)
+            self._expect_prompt(timeout=1)
+            raise ValueError("Continuation prompt found - input was incomplete:\n"
+                             + command)
+        return self.child.before
+
     def do_execute(self, code, silent, store_history=True,
                    user_expressions=None, allow_stdin=False):
         if not code.strip():
