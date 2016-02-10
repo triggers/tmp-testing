@@ -68,6 +68,8 @@ class BashKernel(Kernel):
         interrupted = False
         try:
             output = self.bashwrapper.run_command(code.rstrip(), timeout=None)
+        except ValueError:
+            output = self.bashwrapper.child.before
         except KeyboardInterrupt:
             self.bashwrapper.child.sendintr()
             interrupted = True
