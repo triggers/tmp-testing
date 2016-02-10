@@ -75,13 +75,14 @@ class BashKernel(Kernel):
 #            pos = self.bashwrapper.child.expect_exact([self.bashwrapper.prompt, 'zzz', '\r\n'] ,timeout=1)
             os.system('echo ccc3 >>/tmp/nn')
             # Send standard output
-            partial = self.bashwrapper.child.before
-            stream_content = {'name': 'stdout', 'text': partial}
-            self.send_response(self.iopub_socket, 'stream', stream_content)
+            if pos == 2:
+                partial = self.bashwrapper.child.before + '\n'
+                stream_content = {'name': 'stdout', 'text': partial}
+                self.send_response(self.iopub_socket, 'stream', stream_content)
             if pos == 0:
                 break
             if pos == 1:
-                self.send_response(self.iopub_socket, 'stream', {'name': 'stdout', 'text': 'BUG'} )
+# (maybe not a bug) self.send_response(self.iopub_socket, 'stream', {'name': 'stdout', 'text': 'BUG'} )
                 break
         return pos
         
@@ -115,6 +116,7 @@ class BashKernel(Kernel):
 
         # Command was fully submitted, now wait for the next prompt
         if self.output_while_waiting() == 1:
+            os.system('echo ddd >>/tmp/nn')
             # We got the continuation prompt - command was incomplete
             self.bashwrapper.child.kill(signal.SIGINT)
             self.output_while_waiting()
