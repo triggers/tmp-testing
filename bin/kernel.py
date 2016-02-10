@@ -78,19 +78,19 @@ class BashKernel(Kernel):
         if not cmdlines:
             raise ValueError("No command was given")
 
-        self.child.sendline(cmdlines[0])
+        self.bashwrapper.child.sendline(cmdlines[0])
         for line in cmdlines[1:]:
-            self._expect_prompt(timeout=1)
-            self.child.sendline(line)
+            self.bashwrapper._expect_prompt(timeout=1)
+            self.bashwrapper.child.sendline(line)
 
         # Command was fully submitted, now wait for the next prompt
-        if self._expect_prompt(timeout=timeout) == 1:
+        if self.bashwrapper._expect_prompt(timeout=timeout) == 1:
             # We got the continuation prompt - command was incomplete
-            self.child.kill(signal.SIGINT)
-            self._expect_prompt(timeout=1)
+            self.bashwrapper.child.kill(signal.SIGINT)
+            self.bashwrapper._expect_prompt(timeout=1)
             raise ValueError("Continuation prompt found - input was incomplete:\n"
                              + command)
-        return self.child.before
+        return self.bashwrapper.child.before
 
     def do_execute(self, code, silent, store_history=True,
                    user_expressions=None, allow_stdin=False):
@@ -100,7 +100,7 @@ class BashKernel(Kernel):
 
         interrupted = False
         try:
-            output = self.bashwrapper.run_command(code.rstrip(), timeout=None)
+            output = self.nii_run_command(code.rstrip(), timeout=None)
         except ValueError:
             output = self.bashwrapper.child.before
         except KeyboardInterrupt:
