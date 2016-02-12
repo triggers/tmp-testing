@@ -95,23 +95,6 @@ EOF
 	) ; prev_cmd_failed
 
 	(
-	    $starting_step "Replace bash_kernel's kernel.py with our version"
-	    # TODO: make sure this keeps working if the bash_kernel upstream code is updated
-	    ## e.g., maybe check that md5 of original has not changed, or maybe use patch....
-	    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] &&
-		"$DATADIR/vmdir/ssh-to-kvm.sh" '[ -f ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py.bak ]' 2>/dev/null
-	    $skip_step_if_already_done; set -e
-
-	    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
-
-mv ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py.bak
-
-cp -al ./bin/kernel.py ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py
-
-EOF
-	) ; prev_cmd_failed
-
-	(
 	    $starting_step "Set default password for jupyter, plus other easy initial setup"
 	    JCFG="/home/centos/.jupyter/jupyter_notebook_config.py"
 	    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
@@ -289,6 +272,23 @@ EOF
 
     "$DATADIR/notebooks-sync.sh" tovm bin
     "$DATADIR/notebooks-sync.sh" tovm
+) ; prev_cmd_failed
+
+(
+    $starting_step "Replace bash_kernel's kernel.py with our version"
+    # TODO: make sure this keeps working if the bash_kernel upstream code is updated
+    ## e.g., maybe check that md5 of original has not changed, or maybe use patch....
+    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] &&
+	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ -f ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py.bak ]' 2>/dev/null
+    $skip_step_if_already_done; set -e
+
+    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
+
+mv ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py.bak
+
+cp -al ./bin/kernel.py ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py
+
+EOF
 ) ; prev_cmd_failed
 
 (
