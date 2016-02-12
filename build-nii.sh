@@ -266,7 +266,7 @@ EOF
 	cd "$DATADIR/vmdir/"
 	tar czSvf 1box-openvz-w-jupyter.raw.tar.gz 1box-openvz.netfilter.x86_64.raw
     ) ; prev_cmd_failed
-)
+) ; prev_cmd_failed
 
 (
     $starting_step "Expand fresh image from snapshot of image with Jupyter installed"
