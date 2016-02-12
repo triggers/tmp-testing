@@ -173,7 +173,7 @@ while sleep 0.2; do
         if [ -d "$stepdir" ]; then
             if command="$(get_cell_command "$stepid" "$input")"; then
                 echo "$command" >"$jd/command"
-                echo "$input" | bash $command >"$jd/output" 2>&1
+                echo "$input" | bash $command | tee "$jd/output" 2>&1
                 echo "$?" >"$jd/rc"
                 didcmd=true
             fi
@@ -181,10 +181,9 @@ while sleep 0.2; do
     fi
     if ! $didcmd; then
         # for default, execute code like normal bash cell
-        bash "$jd/input" >"$jd/output" 2>&1
+        bash "$jd/input" | tee "$jd/output" 2>&1
         echo "$?" >"$jd/rc"
     fi
-    echo "$(cat "$jd/output")"
     echo -n "$PS1"
 done
 )  &
