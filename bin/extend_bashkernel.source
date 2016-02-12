@@ -1,8 +1,14 @@
 ## This version seems to work, but Jupyter ignores all output after
 ## sending SIGINT.  Therefore, our cell code is processed properly
 ## without "#." and generates output, but this output is ignored and
-## not displayed on the notebook.  TODO: modify pexpect code.
+## not displayed on the notebook.  Looking at pexpect code, the reason
+## output is not shown is because the python code throws an exception
+## that scripts the output portion of the code.  Catching this
+## exception in the bash_kernel fixes this problem and now output
+## shows in all cases.
+
 ## ((Adding "#." is still supported and then output shows))
+
 
 [ "$already_loaded" = "" ] || {
     echo "Already Loaded"
@@ -148,10 +154,9 @@ get_cell_command()
 # for testing:
 while sleep 0.2; do
     ls -l /proc/$BASHPID/fd >>/tmp/sbash.log
-    ## TODO: Tracing shows delivery of USR1 signal is delayed. It is probably
-    ## because signal delivery is blocked until the process started on the
-    ## next line exits.
+
     readcell_inline
+
     if [[ "$input" = *quit* ]]; then
       echo "bye"
       # the PS1 will be sent by the parent bash (the one created by jupyter)
