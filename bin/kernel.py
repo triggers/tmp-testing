@@ -71,7 +71,7 @@ class BashKernel(Kernel):
             os.system('echo ccc2 >>/tmp/nn')
 #            self.send_response(self.iopub_socket, 'stream', {'name': 'stdout', 'text': 'gogogo'} )
             pos = self.bashwrapper.child.expect_exact([self.bashwrapper.prompt, self.bashwrapper.continuation_prompt, '\r\n'],
-                                                      timeout=1)
+                                                      timeout=None)
 #            pos = self.bashwrapper.child.expect_exact([self.bashwrapper.prompt, 'zzz', '\r\n'] ,timeout=1)
             os.system('echo ccc3 >>/tmp/nn')
             # Send standard output
