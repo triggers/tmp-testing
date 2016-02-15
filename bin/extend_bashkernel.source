@@ -143,7 +143,7 @@ while sleep 0.2; do
 
     readcell_inline
 
-    if [[ "$input" = *quit* ]]; then
+    if [[ "$input" == quit.* ]]; then
       echo "bye"
       # the PS1 will be sent by the parent bash (the one created by jupyter)
       break
