@@ -167,7 +167,10 @@ while sleep 0.2; do
     fi
     if ! $didcmd; then
         # for default, execute code like normal bash cell
-        bash "$jd/input" | tee "$jd/output" 2>&1
+	# (Note: running the file in bash through standard input allows
+	#  a cell code to have an ssh line, followed by lines that
+	#  will be sent to ssh session.)
+	cat "$jd/input" | bash | tee "$jd/output" 2>&1
         echo "$?" >"$jd/rc"
     fi
     echo -n "$PS1"
