@@ -3,6 +3,8 @@
     return
 }
 
+export BASHK_PID="$BASHPID"
+
 set +m
 (
 export already_loaded=true
@@ -32,6 +34,7 @@ echopat='*echo $?*'
 blockingread()
 {
    while sleep 0.2; do
+      [ -d /proc/$BASHK_PID ] || exit  # exit when bash_kernel is reset
       IFS= read -r ln
       if [[ "$ln" == $echopat ]]; then
          # give Jupyter a return code when it asks for one
