@@ -39,7 +39,9 @@ blockingread()
          echo -n "$PS1" >&9
          continue
       fi
-      [ "$ln" = "" ] && continue
+      ## When uncommented, this line makes cells that start with a linefeed hang.
+      ## Will remove these comments if removing it causes no other troubles.
+      # [ "$ln" = "" ] && continue
       break
    done
 }
