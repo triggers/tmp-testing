@@ -264,6 +264,19 @@ EOF
     "$DATADIR/vmdir/kvm-boot.sh"
 
 (
+    $starting_step "Download Oracle Java rpm"
+    targetfile=jdk-8u73-linux-x64.rpm
+    [ -f "$DATADIR/notebooks/downloads/$targetfile" ]
+
+    $skip_step_if_already_done; set -e
+    mkdir -p "$DATADIR/notebooks/downloads"
+    wget --progress=dot:mega --no-check-certificate --no-cookies \
+	 --header "Cookie: oraclelicense=accept-securebackup-cookie" \
+	 http://download.oracle.com/otn-pub/java/jdk/8u73-b02/$targetfile \
+	 -O "$DATADIR/notebooks/downloads/$targetfile"
+) ; prev_cmd_failed
+
+(
     $starting_step "Synchronize notebooks/ to VM"
     [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
 	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ "$(ls notebooks)" != "" ]' 2>/dev/null
