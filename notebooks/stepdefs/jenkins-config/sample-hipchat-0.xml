@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders/>
+  <publishers>
+    <jenkins.plugins.hipchat.HipChatNotifier plugin="hipchat@1.0.0">
+      <token></token>
+      <room></room>
+      <notifications>
+        <jenkins.plugins.hipchat.model.NotificationConfig>
+          <notifyEnabled>true</notifyEnabled>
+          <textFormat>false</textFormat>
+          <notificationType>STARTED</notificationType>
+          <color>GREEN</color>
+          <messageTemplate></messageTemplate>
+        </jenkins.plugins.hipchat.model.NotificationConfig>
+        <jenkins.plugins.hipchat.model.NotificationConfig>
+          <notifyEnabled>true</notifyEnabled>
+          <textFormat>false</textFormat>
+          <notificationType>SUCCESS</notificationType>
+          <color>GREEN</color>
+          <messageTemplate></messageTemplate>
+        </jenkins.plugins.hipchat.model.NotificationConfig>
+      </notifications>
+      <startJobMessage></startJobMessage>
+      <completeJobMessage></completeJobMessage>
+    </jenkins.plugins.hipchat.HipChatNotifier>
+  </publishers>
+  <buildWrappers/>
+</project>
