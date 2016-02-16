@@ -38,7 +38,7 @@ DATADIR="$DATADIR" "$ORGCODEDIR/ind-steps/build-1box/build-1box.sh"
 	    $skip_step_if_already_done ; set -e
 	    mkdir "$DATADIR/vmdir"
 	    # increase default mem to give room for a wakame instance or two
-	    echo ': ${KVMMEM:=2048}' >>"$DATADIR/vmdir/datadir.conf"
+	    echo ': ${KVMMEM:=4096}' >>"$DATADIR/vmdir/datadir.conf"
 	) ; prev_cmd_failed
 
 	DATADIR="$DATADIR/vmdir" \
@@ -64,7 +64,8 @@ DATADIR="$DATADIR" "$ORGCODEDIR/ind-steps/build-1box/build-1box.sh"
 	    $skip_step_if_already_done ; set -e
 
 	    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
-wget https://3230d63b5fc54e62148e-c95ac804525aac4b6dba79b00b39d1d3.ssl.cf1.rackcdn.com/Anaconda3-2.4.1-Linux-x86_64.sh
+wget  --progress=dot:mega \
+   https://3230d63b5fc54e62148e-c95ac804525aac4b6dba79b00b39d1d3.ssl.cf1.rackcdn.com/Anaconda3-2.4.1-Linux-x86_64.sh
 
 chmod +x Anaconda3-2.4.1-Linux-x86_64.sh
 
@@ -81,6 +82,7 @@ EOF
 	(
 	    $starting_step "Install bash_kernel"
 	    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+		## TODO: the next -f test is probably covered by the group
 		[ -f "$DATADIR/vmdir/1box-openvz-w-jupyter.raw.tar.gz" ] || \
 		    "$DATADIR/vmdir/ssh-to-kvm.sh" '[ -d ./anaconda3/lib/python3.5/site-packages/bash_kernel ]' 2>/dev/null
 	    }
@@ -207,6 +209,33 @@ EOS
 	    # https://github.com/axsh/nii-image-and-enshuu-scripts/blob/changes-for-the-2nd-class/wakame-bootstrap/wakame-vdc-install-hierarchy.sh#L486-L506
 	)
 	
+	(
+	    $starting_step "Hack Wakame-vdc to always set openvz's privvmpages to unlimited"
+	    rubysource=/opt/axsh/wakame-vdc/dcmgr/lib/dcmgr/drivers/hypervisor/linux_hypervisor/linux_container/openvz.rb
+	    "$DATADIR/vmdir/ssh-to-kvm.sh" sudo grep 'privvmpage.*unlimited' "$rubysource" 1>/dev/null 2>&1
+	    $skip_step_if_already_done
+	    (
+		cat <<EOF
+	    rubysource='$rubysource'
+EOF
+		cat <<'EOF'
+            sudo cp "$rubysource" /tmp/ # for debugging
+	    orgcode="$(sudo cat "$rubysource")"
+            # original line: sh("vzctl set %s --privvmpage %s --save",[hc.inst_id, (inst[:memory_size] * 256)])
+	    replaceme='vzctl set %s --privvmpage'
+	    while IFS= read -r ln; do
+		  if [[ "$ln" == *${replaceme}* ]]; then
+                     echo "## $ln"
+                     echo '        sh("vzctl set %s --privvmpage unlimited --save",[hc.inst_id])'
+                     cat # copy the rest unchanged
+                     break
+		  fi
+		  echo "$ln"
+	    done <<<"$orgcode" | sudo bash -c "cat >'$rubysource'"
+EOF
+	    ) | "$DATADIR/vmdir/ssh-to-kvm.sh"
+	)
+	
 	# TODO: this guard is awkward.
 	[ -x "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh" ] && \
 	    "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh"
@@ -220,7 +249,7 @@ EOS
 	cd "$DATADIR/vmdir/"
 	tar czSvf 1box-openvz-w-jupyter.raw.tar.gz 1box-openvz.netfilter.x86_64.raw
     ) ; prev_cmd_failed
-)
+) ; prev_cmd_failed
 
 (
     $starting_step "Expand fresh image from snapshot of image with Jupyter installed"
@@ -233,3 +262,56 @@ EOS
 # TODO: this guard is awkward.
 [ -x "$DATADIR/vmdir/kvm-boot.sh" ] && \
     "$DATADIR/vmdir/kvm-boot.sh"
+
+(
+    $starting_step "Synchronize notebooks/ to VM"
+    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ "$(ls notebooks)" != "" ]' 2>/dev/null
+    }
+    $skip_step_if_already_done; set -e
+
+    "$DATADIR/notebooks-sync.sh" tovm bin
+    "$DATADIR/notebooks-sync.sh" tovm
+) ; prev_cmd_failed
+
+(
+    $starting_step "Replace bash_kernel's kernel.py with our version"
+    # TODO: make sure this keeps working if the bash_kernel upstream code is updated
+    ## e.g., maybe check that md5 of original has not changed, or maybe use patch....
+    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] &&
+	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ -f ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py.bak ]' 2>/dev/null
+    $skip_step_if_already_done; set -e
+
+    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
+
+mv ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py.bak
+
+cp -al ./bin/kernel.py ./anaconda3/lib/python3.5/site-packages/bash_kernel/kernel.py
+
+EOF
+) ; prev_cmd_failed
+
+(
+    $starting_step "Setup .ssh/config and .musselrc"
+    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ -f ~/.ssh/config ]' 2>/dev/null
+    }
+    $skip_step_if_already_done; set -e
+
+	    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
+sudo chown centos:centos ~/.ssh # fix to bug in vmbuilder??
+chmod 700 ~/.ssh
+cat >~/.ssh/config <<EEE
+Host *
+  StrictHostKeyChecking no
+  TCPKeepAlive yes
+  UserKnownHostsFile /dev/null
+  ForwardAgent yes
+EEE
+
+cat >~/.musselrc <<EEE
+DCMGR_HOST=127.0.0.1
+account_id=a-shpoolxx
+EEE
+EOF
+) ; prev_cmd_failed
