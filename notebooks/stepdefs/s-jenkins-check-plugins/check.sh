@@ -11,6 +11,6 @@ if ! check_plugins_exists "git git-client" ; then
     echo "Missing plugin."
 else
     echo "Configuration is correct"
-end
+fi
 
 EOF
