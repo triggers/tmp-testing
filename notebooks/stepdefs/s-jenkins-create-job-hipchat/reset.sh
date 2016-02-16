@@ -1,7 +1,7 @@
 #!/bin/bash
 . /home/centos/notebooks/stepdefs/jenkins-utility/functions.sh
 
-XML_FILE="sample-git-0.xml"
+XML_FILE="sample-hipchat-0.xml"
 SSH="ssh root@10.0.2.100 -i /home/centos/mykeypair"
 
 ${SSH} [[ ! -f /home/${XML_FILE} ]] && scp -i /home/centos/mykeypair stepdefs/jenkins-config/${XML_FILE} root@10.0.2.100:/home &> /dev/null
@@ -14,6 +14,6 @@ $(declare -f reset_job)
 check_client_exists
 
 echo "Creating default job..."
-reset_job sample ${XML_FILE}
+reset_job test-notification ${XML_FILE}
 
 EOF

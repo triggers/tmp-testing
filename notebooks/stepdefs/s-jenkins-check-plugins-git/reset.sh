@@ -6,7 +6,7 @@ ${SSH} <<EOF 2> /dev/null
 
 $(declare -f install_plugins)
 
-install_plugins git git-client
+install_plugins "git git-client"
 service jenkins restart
 
 EOF

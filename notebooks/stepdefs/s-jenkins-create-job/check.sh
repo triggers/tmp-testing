@@ -8,7 +8,7 @@ SSH="ssh root@10.0.2.100 -i /home/centos/mykeypair"
 
 ${SSH} <<EOF 2> /dev/null
 
-if [[ ! -d /var/lib/jenkins/jobs/${JOB} ]] ; then 
+if [[ ! -d /var/lib/jenkins/jobs/${JOB} ]] ; then
     echo "Something went wrong." 
 else 
     echo "Configuration is correct."
