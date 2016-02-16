@@ -6,28 +6,25 @@ function check_client_exists () {
         curl -O http://localhost:8080/jnlpJars/jenkins-cli.jar
 }
 
-function check_plugins_exists () {    
-    local plugins=($@)
-
-    for plugin in ${plugins[@]}; do
+function check_plugins_exists () {
+    for plugin in $@;  do
         if [[ ! -f /var/lib/jenkins/plugins/${plugin}.jpi ]]; then
-            java -jar jenkins-cli.jar -s http://localhost:8080 install-plugin ${plugin}
-            installed_new=0
+            return 1
         fi
     done
-
-    if [[ ! -z ${installed_new} ]]; then service jenkins restart ; fi
 }
 
-function check_job_config () {
-    local job=${1} cfg=${2} field_name=${3}
-    local job_cfg=/var/lib/jenkins/jobs/${job}/config.xml
+function install_plugins () {
+    for plugin in $@;  do
+        if [[ ! -f /var/lib/jenkins/plugins/${plugin}.jpi ]]; then
+            java -jar jenkins-cli.jar -s http://localhost:8080 install-plugin ${plugin}
+        fi
+    done
+}
 
-    
-    if ! confirm_values /home/${cfg} ${job_cfg} ${field_name} ; then
-        return 1
-    fi
-    return 0
+function check_empty () {
+    local cfg=${1} parameter=${2}
+    [[ -z $(get_element_value /var/lib/jenkins/${cfg} ${parameter}) ]]
 }
 
 function reset_job () {
@@ -37,4 +34,11 @@ function reset_job () {
         java -jar jenkins-cli.jar -s http://localhost:8080 delete-job ${job}
     fi
     java -jar jenkins-cli.jar -s http://localhost:8080 create-job ${job} < /home/${cfg}
+}
+
+function check_job_config () {
+    local job=${1} cfg=${2} field_name=${3} confirm=${4:-confirm_values}
+    local job_cfg=/var/lib/jenkins/jobs/${job}/config.xml
+
+    $confirm /home/${cfg} ${job_cfg} "${field_name}" || return 1
 }
