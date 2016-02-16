@@ -1,19 +1,9 @@
-## This version seems to work, but Jupyter ignores all output after
-## sending SIGINT.  Therefore, our cell code is processed properly
-## without "#." and generates output, but this output is ignored and
-## not displayed on the notebook.  Looking at pexpect code, the reason
-## output is not shown is because the python code throws an exception
-## that scripts the output portion of the code.  Catching this
-## exception in the bash_kernel fixes this problem and now output
-## shows in all cases.
-
-## ((Adding "#." is still supported and then output shows))
-
-
 [ "$already_loaded" = "" ] || {
     echo "Already Loaded"
     return
 }
+
+export BASHK_PID="$BASHPID"
 
 set +m
 (
@@ -41,13 +31,10 @@ echo $$ >/tmp/bpid
 
 echopat='*echo $?*'
 
-# The code below seems to work, but it may be sensitive to
-# the timeout and sleep values.  Hopefully it works well enough
-# until we have time to modify the bash_kernel code.
-
 blockingread()
 {
    while sleep 0.2; do
+      [ -d /proc/$BASHK_PID ] || exit  # exit when bash_kernel is reset
       IFS= read -r ln
       if [[ "$ln" == $echopat ]]; then
          # give Jupyter a return code when it asks for one
@@ -55,7 +42,9 @@ blockingread()
          echo -n "$PS1" >&9
          continue
       fi
-      [ "$ln" = "" ] && continue
+      ## When uncommented, this line makes cells that start with a linefeed hang.
+      ## Will remove these comments if removing it causes no other troubles.
+      # [ "$ln" = "" ] && continue
       break
    done
 }
@@ -78,15 +67,12 @@ readcell_inline()
         echo SIG-startloop1 >>/tmp/usr1
 	## if message sent on pipe && the message is fakesigint && break
 
-#	[ "$lnr" = "" ] && sleep 0.5 && continue
-	## somehow get make this next line unnecessary!!!
+	## The following end-of-cell markers still work, but should not be needed anymore
 	[[ "$lnr" == *endofcell* ]] && break
 	[[ "$lnr" == \#.* ]] && break
 	input="${input}"$'\n'"${lnr}"
-	# The problem is this next line.  Jupyter will not send the next line unless
-	# PS2 is sent.  But if there are no more lines, then Jupyter will block.
-	# Therefore, it is necessary to modify the bash_kernel code to remove the
-	# requirement for the endofcell marker.
+
+	# Send $PS2 so that Jupyter will send us the next line, or SIGINT to the parent process if no more lines
 	echo -n "$PS2">&9
         echo SIG-endloop1 >>/tmp/usr1
 	lnr=''
@@ -94,7 +80,7 @@ readcell_inline()
     echo SIG-readcell >>/tmp/usr1
 }
 
-readcell() # not used yet
+readcell() # just example code.  Not used for now.
 {
     echo "$(readcell_inline; echo "$input")"
 }
@@ -157,7 +143,7 @@ while sleep 0.2; do
 
     readcell_inline
 
-    if [[ "$input" = *quit* ]]; then
+    if [[ "$input" == quit.* ]]; then
       echo "bye"
       # the PS1 will be sent by the parent bash (the one created by jupyter)
       break
@@ -181,7 +167,10 @@ while sleep 0.2; do
     fi
     if ! $didcmd; then
         # for default, execute code like normal bash cell
-        bash "$jd/input" | tee "$jd/output" 2>&1
+	# (Note: running the file in bash through standard input allows
+	#  a cell code to have an ssh line, followed by lines that
+	#  will be sent to ssh session.)
+	cat "$jd/input" | bash | tee "$jd/output" 2>&1
         echo "$?" >"$jd/rc"
     fi
     echo -n "$PS1"
