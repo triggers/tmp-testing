@@ -12,9 +12,9 @@ $(declare -f contains_value)
 $(declare -f get_element_values)
 $(declare -f confirm_values)
 
-if [[ ! -d /var/lib/jenkins/jobs/${JOB} ]] ; then 
+if [[ ! -d /var/lib/jenkins/jobs/${JOB} ]] ; then
     echo "Something went wrong. Check previous step."
-elif ! check_job_config ${JOB} ${XML_FILE} command ; then 
+elif ! check_job_config ${JOB} ${XML_FILE} "command" confirm_values ; then
     echo "Something went wrong."
 else 
     echo "Configuration is correct."
