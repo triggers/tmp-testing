@@ -102,7 +102,7 @@ new_job_dir()
 
 get_step_id()
 {
-    # first line of the form: # (
+    # (version 1) first line of the form: # (
     pat='#(*'
     while read ln; do
         nospaces="${ln// /}"
@@ -110,6 +110,16 @@ get_step_id()
             afterparen="${nospaces#*\(}"
             id="${afterparen%%\)*}"
             echo "$id"
+            return 0
+        fi
+    done <<<"$1"
+    # (version 2) first line of the form: # Task: thetoken
+    pat='#[tT]ask:*'
+    while read ln; do
+        nospaces="${ln// /}"
+        if [[ "$nospaces" == $pat ]]; then
+            read commentchar tasktoken thetoken therest <<<"$ln"
+            echo "$thetoken"
             return 0
         fi
     done <<<"$1"
