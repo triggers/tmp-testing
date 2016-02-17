@@ -5,6 +5,8 @@ JOB=${1:-"sample2"}
 XML_FILE="sample-2.xml"
 SSH="ssh root@10.0.2.100 -i /home/centos/mykeypair"
 
+xml_to_vm
+
 ${SSH} <<EOF 2> /dev/null
 
 $(declare -f check_job_config)

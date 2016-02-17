@@ -3,6 +3,10 @@
 # Compares a string value ($1) to all values in an array ($2)
 # and returns true if a match is found.
 
+function xml_to_vm() {
+    scp -i /home/centos/mykeypair /home/centos/notebooks/stepdefs/jenkins-config/${XML_FILE} root@10.0.2.100:/home &> /dev/null
+}
+
 function contains_value() {
     local match=${1}
 
