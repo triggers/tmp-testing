@@ -4,7 +4,7 @@
 XML_FILE="hudson.plugins.git.GitSCM.xml"
 SSH="ssh root@10.0.2.100 -i /home/centos/mykeypair"
 
-${SSH} [[ ! -f /home/${XML_FILE} ]] && scp -i /home/centos/mykeypair stepdefs/jenkins-config/${XML_FILE} root@10.0.2.100:/home &> /dev/null
+xml_to_vm
 
 ${SSH} <<EOF 2> /dev/null
 

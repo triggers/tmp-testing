@@ -5,6 +5,7 @@ JOB=${1:-"sample"}
 XML_FILE="sample-git-0.xml"
 SSH="ssh root@10.0.2.100 -i /home/centos/mykeypair"
 
+xml_to_vm
 
 ${SSH} <<EOF 2> /dev/null
 
