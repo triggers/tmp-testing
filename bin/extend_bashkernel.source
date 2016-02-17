@@ -128,10 +128,26 @@ get_step_id()
 
 get_cell_command()
 {
-    # first line of the form: # token1 token2 token3
-    # where token1 is a file name in the ./stepdefs directory.
     id="$1"
     inputtoscan="$2"
+
+    # Give version 2 priority.
+    # (version 2) first line of the form: # Evaluation Mode: token1 token2 token3
+    # where token1 is a file name in the ./stepdefs directory.
+    pat='#*'
+    while read ln; do
+        read commentchar evaluationtoken modetoken token1 othertokens <<<"${ln}"
+	[[ "$evaluationtoken" != [eE]valuation ]] && continue
+	[[ "$modetoken" != [mM]ode: ]] && continue
+        script_path="$basedir/stepdefs/s-$id/$token1.sh"
+        if [ -f "$script_path" ]; then
+            echo "$script_path $othertokens"
+            return 0
+        fi
+    done <<<"$inputtoscan"
+
+    # (version 1) first line of the form: # token1 token2 token3
+    # where token1 is a file name in the ./stepdefs directory.
     pat='#*'
     while read ln; do
         if [[ "$ln" == $pat ]]; then
