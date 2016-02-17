@@ -163,6 +163,8 @@ get_cell_command()
     return 255
 }
 
+global_mode=none
+
 # for testing:
 while sleep 0.2; do
     ls -l /proc/$BASHPID/fd >>/tmp/sbash.log
@@ -175,6 +177,17 @@ while sleep 0.2; do
       break
     fi
 
+    if [[ "$input" == *set-global-evaluation-mode* ]]; then
+	after="${input#*set-global-evaluation-mode}"
+	read themode therest <<<"$after"
+	themode="${themode//\"/}"
+	themode="${themode//\'/}"
+	echo "Changing global mode to '$themode'"
+	export global_mode="$themode"
+	echo -n "$PS1"
+	continue
+    fi
+
     jd="$(new_job_dir)"
     echo "$input" >"$jd/input"
 
@@ -183,7 +196,18 @@ while sleep 0.2; do
         # set -x
         stepdir="$basedir/stepdefs/s-$stepid"
         if [ -d "$stepdir" ]; then
-            if command="$(get_cell_command "$stepid" "$input")"; then
+	    if [ "$global_mode" != "none" ]; then
+		command="$stepdir/$global_mode.sh"
+		if [ -f "$command" ]; then
+                    echo "$command" >"$jd/command"
+                    echo "$input" | bash $command | tee "$jd/output" 2>&1
+                    echo "$?" >"$jd/rc"
+                    didcmd=true
+		else
+                    echo "No $global_mode mode for this cell" | tee "$jd/output" 2>&1
+                    didcmd=true
+		fi
+            elif command="$(get_cell_command "$stepid" "$input")"; then
                 echo "$command" >"$jd/command"
                 echo "$input" | bash $command | tee "$jd/output" 2>&1
                 echo "$?" >"$jd/rc"
