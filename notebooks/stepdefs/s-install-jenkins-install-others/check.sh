@@ -5,7 +5,7 @@ out="$(ssh -qi ../mykeypair root@10.0.2.100 'rpm -qa' 2>&1)"
 packages=(
     git 
     iputils nc 
-    qemu-kvm qemu-img 
+    qemu-img 
     parted kpartx 
     rpm-build automake createrepo 
     openssl-devel zlib-devel readline-devel 

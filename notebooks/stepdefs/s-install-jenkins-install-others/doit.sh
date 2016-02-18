@@ -5,7 +5,7 @@ thescript="$(cat <<'EEE'
 
 ssh -qi /home/centos/mykeypair root@$IP <<'EOS'
 
-yum install -y git iputils nc qemu-kvm qemu-img parted kpartx rpm-build automake createrepo openssl-devel zlib-devel readline-devel gcc
+yum install -y git iputils nc qemu-img parted kpartx rpm-build automake createrepo openssl-devel zlib-devel readline-devel gcc
 
 EOS
 EEE
