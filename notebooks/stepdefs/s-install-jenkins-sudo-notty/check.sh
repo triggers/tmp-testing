@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+
 out="$(ssh -qi ../mykeypair root@10.0.2.100 'grep requiretty /etc/sudoers' 2>&1)"
 
 out2="$(echo "$out" | grep -v '^ *#')"
