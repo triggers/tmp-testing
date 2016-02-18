@@ -102,7 +102,7 @@ new_job_dir()
 
 get_step_id()
 {
-    # first line of the form: # (
+    # (version 1) first line of the form: # (
     pat='#(*'
     while read ln; do
         nospaces="${ln// /}"
@@ -113,15 +113,41 @@ get_step_id()
             return 0
         fi
     done <<<"$1"
+    # (version 2) first line of the form: # Task: thetoken
+    pat='#[tT]ask:*'
+    while read ln; do
+        nospaces="${ln// /}"
+        if [[ "$nospaces" == $pat ]]; then
+            read commentchar tasktoken thetoken therest <<<"$ln"
+            echo "$thetoken"
+            return 0
+        fi
+    done <<<"$1"
     return 255
 }
 
 get_cell_command()
 {
-    # first line of the form: # token1 token2 token3
-    # where token1 is a file name in the ./stepdefs directory.
     id="$1"
     inputtoscan="$2"
+
+    # Give version 2 priority.
+    # (version 2) first line of the form: # Evaluation Mode: token1 token2 token3
+    # where token1 is a file name in the ./stepdefs directory.
+    pat='#*'
+    while read ln; do
+        read commentchar evaluationtoken modetoken token1 othertokens <<<"${ln}"
+	[[ "$evaluationtoken" != [eE]valuation ]] && continue
+	[[ "$modetoken" != [mM]ode: ]] && continue
+        script_path="$basedir/stepdefs/s-$id/$token1.sh"
+        if [ -f "$script_path" ]; then
+            echo "$script_path $othertokens"
+            return 0
+        fi
+    done <<<"$inputtoscan"
+
+    # (version 1) first line of the form: # token1 token2 token3
+    # where token1 is a file name in the ./stepdefs directory.
     pat='#*'
     while read ln; do
         if [[ "$ln" == $pat ]]; then
@@ -137,6 +163,8 @@ get_cell_command()
     return 255
 }
 
+global_mode=none
+
 # for testing:
 while sleep 0.2; do
     ls -l /proc/$BASHPID/fd >>/tmp/sbash.log
@@ -149,6 +177,17 @@ while sleep 0.2; do
       break
     fi
 
+    if [[ "$input" == *set-global-evaluation-mode* ]]; then
+	after="${input#*set-global-evaluation-mode}"
+	read themode therest <<<"$after"
+	themode="${themode//\"/}"
+	themode="${themode//\'/}"
+	echo "Changing global mode to '$themode'"
+	export global_mode="$themode"
+	echo -n "$PS1"
+	continue
+    fi
+
     jd="$(new_job_dir)"
     echo "$input" >"$jd/input"
 
@@ -157,7 +196,18 @@ while sleep 0.2; do
         # set -x
         stepdir="$basedir/stepdefs/s-$stepid"
         if [ -d "$stepdir" ]; then
-            if command="$(get_cell_command "$stepid" "$input")"; then
+	    if [ "$global_mode" != "none" ]; then
+		command="$stepdir/$global_mode.sh"
+		if [ -f "$command" ]; then
+                    echo "$command" >"$jd/command"
+                    echo "$input" | bash $command | tee "$jd/output" 2>&1
+                    echo "$?" >"$jd/rc"
+                    didcmd=true
+		else
+                    echo "No $global_mode mode for this cell" | tee "$jd/output" 2>&1
+                    didcmd=true
+		fi
+            elif command="$(get_cell_command "$stepid" "$input")"; then
                 echo "$command" >"$jd/command"
                 echo "$input" | bash $command | tee "$jd/output" 2>&1
                 echo "$?" >"$jd/rc"
