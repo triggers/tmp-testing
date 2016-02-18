@@ -14,4 +14,4 @@ echo "Output follows:"
 
 bash <<<"$thescript"
 
-echo "Completed."
+echo "## End of Output ##"

@@ -16,3 +16,5 @@ echo
 echo "Output follows:"
 
 bash <<<"$thescript"
+
+echo "## End of Output ##"
