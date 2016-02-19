@@ -236,6 +236,33 @@ EOF
 	    ) | "$DATADIR/vmdir/ssh-to-kvm.sh"
 	)
 	
+	(
+	    $starting_step "Hack Wakame-vdc to always set each openvz VM's DISKSPACE to 10G:15G"
+	    rubysource=/opt/axsh/wakame-vdc/dcmgr/templates/openvz/template.conf
+	    "$DATADIR/vmdir/ssh-to-kvm.sh" sudo grep 'DISKSPACE.*10G' "$rubysource" 1>/dev/null 2>&1
+	    $skip_step_if_already_done
+	    (
+		cat <<EOF
+	    rubysource='$rubysource'
+EOF
+		cat <<'EOF'
+            sudo cp "$rubysource" /tmp/ # for debugging
+	    orgcode="$(sudo cat "$rubysource")"
+            # original line: DISKSPACE="2G:2.2G"
+	    replaceme='DISKSPACE'
+	    while IFS= read -r ln; do
+		  if [[ "$ln" == *${replaceme}* ]]; then
+                     echo "## $ln"
+                     echo 'DISKSPACE="10G:15G"'
+                     cat # copy the rest unchanged
+                     break
+		  fi
+		  echo "$ln"
+	    done <<<"$orgcode" | sudo bash -c "cat >'$rubysource'"
+EOF
+	    ) | "$DATADIR/vmdir/ssh-to-kvm.sh"
+	)
+	
 	# TODO: this guard is awkward.
 	[ -x "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh" ] && \
 	    "$DATADIR/vmdir/kvm-shutdown-via-ssh.sh"
