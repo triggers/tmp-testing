@@ -21,15 +21,10 @@ xml_to_vm
 
 ${ssh} <<EOF 2> /dev/null
 
-$(declare -f confirm_single_value)
-$(declare -f get_element_value)
+$(declare -f confirm)
 $(declare -f check_job_config)
 $(declare -f contains_value)
-
-# These functions needs to be remade to work on a per line basis,
-# and evaluate output rather than value if possible.
-$(declare -f get_element_values)
-$(declare -f confirm_values)
+$(declare -f get_xml_element_value)
 
 pass=true
 
@@ -47,12 +42,12 @@ pass=true
 
 pass=true
 
-! confirm_values /home/${xml_file[0]} ${jenkins_dir}/jobs/${jobs[0]}/config.xml "command" && {
+! confirm multi /home/${xml_file[0]} ${jenkins_dir}/jobs/${jobs[0]}/config.xml "command" && {
     echo -e "${cross_mark} param: shell script"
     pass=false
 }
 
-! confirm_single_value /home/${xml_file[1]} ${jenkins_dir}/jobs/${jobs[1]}/config.xml "childProjects" && {
+! confirm single /home/${xml_file[1]} ${jenkins_dir}/jobs/${jobs[1]}/config.xml "childProjects" && {
     echo -e "${cross_mark} param: build trigger"
     pass=false
 }

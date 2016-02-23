@@ -29,8 +29,8 @@ function install_plugins () {
 }
 
 function check_empty () {
-    local cfg=${1} parameter=${2}
-    [[ -z $(get_element_value /var/lib/jenkins/${cfg} ${parameter}) ]]
+    local cfg=${1} param=${2}
+    [[ -z $(cat /var/lib/jenkins/${cfg} | grep -oP '(?<=<'${param}'>).*?(?=</'${param}'>)') ]]
 }
 
 function reset_job () {

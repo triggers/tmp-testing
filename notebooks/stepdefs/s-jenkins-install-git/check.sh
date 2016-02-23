@@ -19,11 +19,10 @@ xml_to_vm
 
 ${ssh} <<EOF 2> /dev/null
 
-$(declare -f confirm_single_value)
-$(declare -f get_element_value)
 $(declare -f check_job_config)
 $(declare -f check_plugins_exists)
 $(declare -f check_empty)
+$(declare -f confirm)
 
 ! check_plugins_exists "git git-client" &&
     echo -e "${cross_mark} Plugins" || echo -e "${check_mark} Plugins"
@@ -36,12 +35,12 @@ $(declare -f check_empty)
 
 pass=true
 
-! confirm_single_value /home/${xml_file[1]} ${jenkins_dir}/jobs/${jobs[0]}/config.xml "url" && {
+! confirm single /home/${xml_file[1]} ${jenkins_dir}/jobs/${jobs[0]}/config.xml "url" && {
     echo -e "${cross_mark} param: url"
     pass=false
 }
 
-! confirm_single_value /home/${xml_file[1]} ${jenkins_dir}/jobs/${jobs[0]}/config.xml "spec" && {
+! confirm single /home/${xml_file[1]} ${jenkins_dir}/jobs/${jobs[0]}/config.xml "spec" && {
     echo -e "${cross_mark} param: chedule"
     pass=false 
 }
