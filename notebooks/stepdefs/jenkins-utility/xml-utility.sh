@@ -4,7 +4,9 @@
 # and returns true if a match is found.
 
 function xml_to_vm() {
-    scp -i /home/centos/mykeypair /home/centos/notebooks/stepdefs/jenkins-config/${XML_FILE} root@10.0.2.100:/home &> /dev/null
+    for file in "${xml_file[@]}"; do
+        scp -i /home/centos/mykeypair /home/centos/notebooks/stepdefs/jenkins-config/${file} root@10.0.2.100:/home &> /dev/null
+    done
 }
 
 function contains_value() {
@@ -28,7 +30,6 @@ function get_element_values () {
             sed 's|<'${element_name}'>||' | \
             sed 's|</'${element_name}'>||'
           )
-
     echo ${values}
 }
 
@@ -52,6 +53,9 @@ function get_element_value () {
 
 function confirm_values () {
     local target_xml=${1} try_xml=${2} element_name=${3}
+    [[ -f ${target_xml} ]] || return 1
+    [[ -f ${try_xml} ]] || return 1
+
     local required_values=( $(get_element_values ${target_xml} ${element_name}) )
     local parsed_values=( $(get_element_values ${try_xml} ${element_name}) )
 
@@ -60,7 +64,6 @@ function confirm_values () {
     
     for required_value in ${required_values[@]}; do
         if ! $(contains_value "${required_value}" ${parsed_values[@]}) ; then
-            echo "[ERROR]: Missing value. ${required_value}"
             return 1
         fi
     done
@@ -71,6 +74,10 @@ function confirm_values () {
 
 function confirm_single_value () {
     local target_xml=${1} try_xml=${2} element_name=${3}
+    [[ -f ${target_xml} ]] || return 1
+    [[ -f ${try_xml} ]] || return 1
+
+
     local required_value=$(get_element_value ${target_xml} ${element_name})
     local parsed_value=$(get_element_value ${try_xml} ${element_name})
     if [[ "${parsed_value}" == "${required_value}" ]] ; then
