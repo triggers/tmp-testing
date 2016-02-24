@@ -10,7 +10,7 @@ function xml_to_vm() {
 # and returns true if a match is found.
 
 function contains_value() {
-    local match=${1}
+    local match="${1}"
 
     for value in "${@:2}"; do
         [[ "${match}" == "${value}" ]] &&
@@ -29,21 +29,17 @@ function get_xml_element_value() {
 
     while read -r line; do
         case "$line" in
-
-            #TODO: Implement a condition that matches when requested element is a single line
-
-            *\<"${element_name}"\>*)
-                ${return_on_detected} && echo ${line} | sed 's/<'${element_name}'>//g'
-                in_element=true
-                ;;
-
             # TODO: Find a better way to match elements which have attributes attached.
-
             *\<"${element_name} "*)
                 echo ${line} | grep -oP '>\K.*?(?=<)'
                 ;;
+            #TODO: Implement a condition that matches when requested element is a single line
+            *\<"${element_name}"\>*)
+                ${return_on_detected} && echo "${line}" | sed 's/<'${element_name}'>//g'
+                in_element=true
+                ;;
             *\</"${element_name}"\>*)
-                ${return_on_detected} && echo ${line} | sed 's/<\/'${element_name}'>//g'
+                ${return_on_detected} && echo "${line}" | sed 's/<\/'${element_name}'>//g'
                 in_element=false
                 ;;
             *)
@@ -76,13 +72,23 @@ function confirm() {
     }
 
     function multi_line_value() {
-        local parsed_values=( "$(cat ${try_xml} | get_xml_element_value "${element_name}" true)" )
-        local target_values=( "$(cat ${target_xml} | get_xml_element_value "${element_name}" true)" )
+        local parsed_values=( $(echo "$(cat ${try_xml} | get_xml_element_value "${element_name}" true)" ) )
+        local target_values=( $(echo "$(cat ${target_xml} | get_xml_element_value "${element_name}" true)" ) )
+
         for required_value in "${target_values[@]}"; do
-            if ! $(contains_value "${required_value}" "${parsed_values[@]}") ; then
+            if ! contains_value "${required_value}" "${parsed_values[@]}" ; then
                 return 1
             fi
         done
+    }
+
+    # Check for exact match (order and content)
+    # TODO: Add ignore for blank lines
+    function multi_line_value2() {
+        local parsed_values=( "$(cat ${try_xml} | get_xml_element_value "${element_name}" true)" )
+        local target_values=( "$(cat ${target_xml} | get_xml_element_value "${element_name}" true)" )
+
+        [[ "${parsed_values}" == "${target_values}" ]]
     }
 
     function nested_line_value () {
@@ -104,6 +110,7 @@ function confirm() {
     case "${method}" in
         "single") single_line_value ;;
         "multi") multi_line_value ;;
+        "multi2") multi_line_value2 ;;
         "nested") nested_line_value ;;
     esac
 }

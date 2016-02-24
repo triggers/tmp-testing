@@ -50,7 +50,7 @@ pass=true
     pass=false
 }
 
-! confirm multi /home/${xml_file[0]} ${jenkins_dir}/jobs/${jobs[0]}/config.xml "command" && {
+! confirm multi2 /home/${xml_file[0]} ${jenkins_dir}/jobs/${jobs[0]}/config.xml "command" && {
     echo -e "${cross_mark} param: shell script"
     pass=false
 }
