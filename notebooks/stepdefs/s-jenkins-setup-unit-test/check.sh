@@ -31,7 +31,7 @@ ${ssh} <<EOF 2> /dev/null
 
 
 $(declare -f get_xml_element_value)
-$(declare -f confirm_multiline_values)
+$(declare -f confirm)
 $(declare -f confirm_attributed_single_value)
 $(declare -f check_job_config)
 $(declare -f contains_value)
@@ -50,7 +50,7 @@ pass=true
     pass=false
 }
 
-! confirm_multiline_values /home/${xml_file[0]} ${jenkins_dir}/jobs/${jobs[0]}/config.xml "command" && {
+! confirm multi /home/${xml_file[0]} ${jenkins_dir}/jobs/${jobs[0]}/config.xml "command" && {
     echo -e "${cross_mark} param: shell script"
     pass=false
 }
