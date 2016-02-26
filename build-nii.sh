@@ -304,6 +304,40 @@ EOF
 ) ; prev_cmd_failed
 
 (
+    $starting_step "Install nbextensions to VM"
+    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+	"$DATADIR/vmdir/ssh-to-kvm.sh" 'pip list | grep nbextensions' 2>/dev/null
+    }
+    $skip_step_if_already_done; set -e
+
+    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
+
+pip install https://github.com/ipython-contrib/IPython-notebook-extensions/archive/master.zip --user
+
+EOF
+) ; prev_cmd_failed
+
+## Dynamically generate the steps for these:
+enable_these="
+  testing/hierarchical_collapse/main
+  usability/init_cell/main
+  usability/runtools/main
+  usability/toc2/main
+"
+cfg_path="./.jupyter/nbconfig/notebook.json"
+for ext in $enable_these; do
+    (
+	$starting_step "Enable extension: $ext"
+	[ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+	    "$DATADIR/vmdir/ssh-to-kvm.sh" "grep $ext $cfg_path" 2>/dev/null 1>&2
+	}
+	$skip_step_if_already_done; set -e
+
+	"$DATADIR/vmdir/ssh-to-kvm.sh" jupyter nbextension enable $ext
+    ) ; prev_cmd_failed
+done
+
+(
     $starting_step "Synchronize notebooks/ to VM"
     [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
 	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ "$(ls notebooks)" != "" ]' 2>/dev/null
