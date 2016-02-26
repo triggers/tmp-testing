@@ -1,14 +1,16 @@
 #!/bin/bash
 
+function xml_to_vm() {
+    for file in "${xml_file[@]}"; do
+        scp -i /home/centos/mykeypair /home/centos/notebooks/stepdefs/jenkins-config/${file} root@10.0.2.100:/home &> /dev/null
+    done
+}
+
 # Compares a string value ($1) to all values in an array ($2)
 # and returns true if a match is found.
 
-function xml_to_vm() {
-    scp -i /home/centos/mykeypair /home/centos/notebooks/stepdefs/jenkins-config/${XML_FILE} root@10.0.2.100:/home &> /dev/null
-}
-
 function contains_value() {
-    local match=${1}
+    local match="${1}"
 
     for value in "${@:2}"; do
         [[ "${match}" == "${value}" ]] &&
@@ -17,64 +19,98 @@ function contains_value() {
     return 1
 }
 
-# Extracts data from a xml file ($1) at specified element ($2) where
-# multiple lines needs to be parsed.
 
-function get_element_values () {
-    local filename=${1} element_name=${2}
-    local values=$(
-        cat ${filename} | \
-            sed -n '/.*\<'${element_name}'\>/,/\<\/'${element_name}'\>/p' | \
-            sed 's|<'${element_name}'>||' | \
-            sed 's|</'${element_name}'>||'
-          )
+# Read and returns values from a xml at specified element ($1) where value spans
+# accross multiple lines or element has attribues attatched.
+# ($2 can be set to true to enable output from the line where element is detected)
 
-    echo ${values}
-}
+function get_xml_element_value() {
+    local element_name=${1} in_element=false return_on_detected=${2:-false}
 
-# Extracts data from xml file ($1) at specified element ($2) where
-# parameter is single line.
-
-function get_element_value () {
-    local filename=${1} element_name=${2}
-    local value=$(
-        cat ${filename} | \
-            grep "${element_name}" | \
-            sed 's|<'${element_name}'>||' | \
-            sed 's|</'${element_name}'>||'
-          )
-
-    echo ${value}
-}
-
-# Try one xml file ($2) vs a base file ($1) and make sure element ($3) in both files
-# contains the same data. Returns true when all required data is present.
-
-function confirm_values () {
-    local target_xml=${1} try_xml=${2} element_name=${3}
-    local required_values=( $(get_element_values ${target_xml} ${element_name}) )
-    local parsed_values=( $(get_element_values ${try_xml} ${element_name}) )
-
-    # Possible TODO: Deal with cases where the same command appears more than one time
-    # (remove item on match)
-    
-    for required_value in ${required_values[@]}; do
-        if ! $(contains_value "${required_value}" ${parsed_values[@]}) ; then
-            echo "[ERROR]: Missing value. ${required_value}"
-            return 1
-        fi
+    while read -r line; do
+        case "$line" in
+            # TODO: Find a better way to match elements which have attributes attached.
+            *\<"${element_name} "*)
+                echo ${line} | grep -oP '>\K.*?(?=<)'
+                ;;
+            #TODO: Implement a condition that matches when requested element is a single line
+            *\<"${element_name}"\>*)
+                ${return_on_detected} && echo "${line}" | sed 's/<'${element_name}'>//g'
+                in_element=true
+                ;;
+            *\</"${element_name}"\>*)
+                ${return_on_detected} && echo "${line}" | sed 's/<\/'${element_name}'>//g'
+                in_element=false
+                ;;
+            *)
+                if $in_element; then
+                    echo "$line"
+                fi
+                ;;
+        esac
     done
-    return 0
 }
 
-# For single value.
+# Confirms that the values of specified element ($4) in a file ($3) matches
+# with the values in a default file ($2).
+# Due to the xml structure we used different parsing methods ($1) depending
+# on the circumstance and what sort of field we are requesting a value from.
+#  ( methods : single, multi, nested )
 
-function confirm_single_value () {
-    local target_xml=${1} try_xml=${2} element_name=${3}
-    local required_value=$(get_element_value ${target_xml} ${element_name})
-    local parsed_value=$(get_element_value ${try_xml} ${element_name})
-    if [[ "${parsed_value}" == "${required_value}" ]] ; then
-        return 0
-    fi
-    return 1
+function confirm() {
+    local method=${1} target_xml=${2} try_xml=${3} element_name="${4}"
+    local required_values=("${5}")
+
+    [[ -f ${try_xml} ]] || { echo "Test xml not found." ; return 1 ; }
+    [[ -f ${target_xml} ]] || { echo "Target xml not found." ; return 1 ; }
+    [[ ! -z ${element_name} ]] || { echo "No element specified" ; return 1 ; }
+
+    function single_line_value() {
+        local parsed_value=$(cat ${try_xml} | grep -oP '(?<=<'${element_name}'>).*?(?=</'${element_name}'>)')
+        local target_value=$(cat ${target_xml} | grep -oP '(?<=<'${element_name}'>).*?(?=</'${element_name}'>)')
+        [[ "${parsed_value}" == "${target_value}" ]]
+    }
+
+    function multi_line_value() {
+        local parsed_values=( $(echo "$(cat ${try_xml} | get_xml_element_value "${element_name}" true)" ) )
+        local target_values=( $(echo "$(cat ${target_xml} | get_xml_element_value "${element_name}" true)" ) )
+
+        for required_value in "${target_values[@]}"; do
+            if ! contains_value "${required_value}" "${parsed_values[@]}" ; then
+                return 1
+            fi
+        done
+    }
+
+    # Check for exact match (order and content)
+    # TODO: Add ignore for blank lines
+    function multi_line_value2() {
+        local parsed_values=( "$(cat ${try_xml} | get_xml_element_value "${element_name}" true)" )
+        local target_values=( "$(cat ${target_xml} | get_xml_element_value "${element_name}" true)" )
+
+        [[ "${parsed_values}" == "${target_values}" ]]
+    }
+
+    function nested_line_value () {
+        for value in ${required_values[@]}; do
+            target_values+=( $(cat ${target_xml} | \
+                                      get_xml_element_value ${element_name} | \
+                                      grep -oP '(?<=<'${value}'>).*?(?=</'${value}'>)')
+                           )
+            parsed_values+=( $(cat ${try_xml} | \
+                                      get_xml_element_value ${element_name} | \
+                                      grep -oP '(?<=<'${value}'>).*?(?=</'${value}'>)')
+                          )
+        done
+        # TODO: Switch to compare the contents of the arrays instead
+        [[ "${parsed_values[@]}" == "${target_values[@]}" ]]
+    }
+
+
+    case "${method}" in
+        "single") single_line_value ;;
+        "multi") multi_line_value ;;
+        "multi2") multi_line_value2 ;;
+        "nested") nested_line_value ;;
+    esac
 }
