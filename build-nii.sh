@@ -304,6 +304,20 @@ EOF
 ) ; prev_cmd_failed
 
 (
+    $starting_step "Install nbextensions to VM"
+    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+	"$DATADIR/vmdir/ssh-to-kvm.sh" 'pip list | grep nbextensions' 2>/dev/null
+    }
+    $skip_step_if_already_done; set -e
+
+    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
+
+pip install https://github.com/ipython-contrib/IPython-notebook-extensions/archive/master.zip --user
+
+EOF
+) ; prev_cmd_failed
+
+(
     $starting_step "Synchronize notebooks/ to VM"
     [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
 	"$DATADIR/vmdir/ssh-to-kvm.sh" '[ "$(ls notebooks)" != "" ]' 2>/dev/null
