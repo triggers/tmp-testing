@@ -21,7 +21,19 @@ from .images import (
     extract_image_filenames, display_data_for_image, image_setup_cmd
 )
 
+class CREPLWrapper(replwrap.REPLWrapper):
+    def __init__(self, cmd_or_spawn, orig_prompt, prompt_change,
+                 new_prompt=replwrap.PEXPECT_PROMPT,
+                 continuation_prompt=replwrap.PEXPECT_CONTINUATION_PROMPT,
+                 extra_init_cmd=None):
+        replwrap.REPLWrapper.__init__(self, cmd_or_spawn, orig_prompt, prompt_change,
+                                      new_prompt, continuation_prompt, extra_init_cmd)
 
+    def _expect_prompt(self, timeout=-1):
+        return self.child.expect_exact([self.prompt, self.continuation_prompt],
+                                       timeout=timeout)
+
+    
 class BashKernel(Kernel):
     implementation = 'bash_kernel'
     implementation_version = __version__
@@ -58,7 +70,7 @@ class BashKernel(Kernel):
             bashrc = os.path.join(os.path.dirname(pexpect.__file__), 'bashrc.sh')
             child = pexpect.spawn("bash", ['--rcfile', bashrc], echo=False,
                                   encoding='utf-8')
-            self.bashwrapper = replwrap.REPLWrapper(child,
+            self.bashwrapper = CREPLWrapper(child,
                                            u'\$', u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''",
                                            extra_init_cmd="export PAGER=cat")
         finally:
