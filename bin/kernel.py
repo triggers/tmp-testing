@@ -31,20 +31,24 @@ class CREPLWrapper(replwrap.REPLWrapper):
                                       new_prompt, continuation_prompt, extra_init_cmd)
 
     def _expect_prompt(self, timeout=-1):
-        while True:
+        if timeout == None:
+            # Only one run_command below uses timeout=None, and it should receive continous output
+            while True:
+                pos = self.child.expect_exact([self.prompt, self.continuation_prompt, '\r\n'],
+                                              timeout=None)
+                if pos == 2:
+                    # if end of line, immediately send output so far
+                    partial = self.child.before + 'A\n'
+                    stream_content = {'name': 'stdout', 'text': partial}
+                    self.bkernel.send_response(self.bkernel.iopub_socket, 'stream', stream_content)
+                else:
+                    break
+        else:
+            # The other run_commands use other timeout values, and all output should be collected
             pos = self.child.expect_exact([self.prompt, self.continuation_prompt],
-                                                      timeout=None)
-            break;
-            if pos == 0:
-                # if end of line, immediately send output so far
-                partial = self.child.before + 'A\n'
-                stream_content = {'name': 'stdout', 'text': partial}
-                self.bkernel.send_response(self.bkernel.iopub_socket, 'stream', stream_content)
-            else:
-                break
+                                          timeout=None)
         return pos
 
-    
 class BashKernel(Kernel):
     implementation = 'bash_kernel'
     implementation_version = __version__
@@ -82,8 +86,8 @@ class BashKernel(Kernel):
             child = pexpect.spawn("bash", ['--rcfile', bashrc], echo=False,
                                   encoding='utf-8')
             self.bashwrapper = CREPLWrapper(child,
-                                           u'\$', u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''",
-                                           extra_init_cmd="export PAGER=cat")
+                                            u'\$', u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''",
+                                            extra_init_cmd="export PAGER=cat", bkernelp=self)
         finally:
             signal.signal(signal.SIGINT, sig)
 
