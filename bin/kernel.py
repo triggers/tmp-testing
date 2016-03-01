@@ -25,13 +25,24 @@ class CREPLWrapper(replwrap.REPLWrapper):
     def __init__(self, cmd_or_spawn, orig_prompt, prompt_change,
                  new_prompt=replwrap.PEXPECT_PROMPT,
                  continuation_prompt=replwrap.PEXPECT_CONTINUATION_PROMPT,
-                 extra_init_cmd=None):
+                 extra_init_cmd=None, bkernelp=None):
+        self.bkernel = bkernelp
         replwrap.REPLWrapper.__init__(self, cmd_or_spawn, orig_prompt, prompt_change,
                                       new_prompt, continuation_prompt, extra_init_cmd)
 
     def _expect_prompt(self, timeout=-1):
-        return self.child.expect_exact([self.prompt, self.continuation_prompt],
-                                       timeout=timeout)
+        while True:
+            pos = self.child.expect_exact([self.prompt, self.continuation_prompt],
+                                                      timeout=None)
+            break;
+            if pos == 0:
+                # if end of line, immediately send output so far
+                partial = self.child.before + 'A\n'
+                stream_content = {'name': 'stdout', 'text': partial}
+                self.bkernel.send_response(self.bkernel.iopub_socket, 'stream', stream_content)
+            else:
+                break
+        return pos
 
     
 class BashKernel(Kernel):
@@ -133,7 +144,7 @@ class BashKernel(Kernel):
 
         interrupted = False
         try:
-            output = self.nii_run_command(code.rstrip(), timeout=None)
+            output = self.bashwrapper.run_command(code.rstrip(), timeout=None)
         except ValueError:
             output = self.bashwrapper.child.before
         except KeyboardInterrupt:
