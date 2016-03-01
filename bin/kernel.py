@@ -63,16 +63,14 @@ class BashKernel(Kernel):
 
     def output_while_waiting(self):
         while True:
-            pos = self.bashwrapper.child.expect_exact([self.bashwrapper.prompt, self.bashwrapper.continuation_prompt, '\r\n'],
+            pos = self.bashwrapper.child.expect_exact(['\r\n', self.bashwrapper.prompt, self.bashwrapper.continuation_prompt],
                                                       timeout=None)
-            # Send standard output
-            if pos == 2:
-                partial = self.bashwrapper.child.before + '\n'
+            if pos == 0:
+                # if end of line, immediately send output so far
+                partial = self.bashwrapper.child.before + 'z\n'
                 stream_content = {'name': 'stdout', 'text': partial}
                 self.send_response(self.iopub_socket, 'stream', stream_content)
-            if pos == 0:
-                break
-            if pos == 1:
+            else:
                 break
         return pos
         
