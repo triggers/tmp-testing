@@ -1,5 +1,6 @@
 from ipykernel.kernelbase import Kernel
 from pexpect import replwrap, EOF
+import pexpect
 
 from subprocess import check_output
 from os import unlink
@@ -54,7 +55,12 @@ class BashKernel(Kernel):
         # so that bash and its children are interruptible.
         sig = signal.signal(signal.SIGINT, signal.SIG_DFL)
         try:
-            self.bashwrapper = replwrap.bash()
+            bashrc = os.path.join(os.path.dirname(pexpect.__file__), 'bashrc.sh')
+            child = pexpect.spawn("bash", ['--rcfile', bashrc], echo=False,
+                                  encoding='utf-8')
+            self.bashwrapper = replwrap.REPLWrapper(child,
+                                           u'\$', u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''",
+                                           extra_init_cmd="export PAGER=cat")
         finally:
             signal.signal(signal.SIGINT, sig)
 
