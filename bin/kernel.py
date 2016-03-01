@@ -62,18 +62,9 @@ class BashKernel(Kernel):
         self.bashwrapper.run_command(image_setup_cmd)
 
     def output_while_waiting(self):
-        os.system('echo 00ccc >>/tmp/nn')
-#        self.send_response(self.iopub_socket, 'stream', {'name': 'stdout', 'text': 'gogogo'} )
         while True:
-            os.system('echo ccc1 >>/tmp/nn')
-#            time.sleep(1)
-            tmptmp = self.bashwrapper.prompt
-            os.system('echo ccc2 >>/tmp/nn')
-#            self.send_response(self.iopub_socket, 'stream', {'name': 'stdout', 'text': 'gogogo'} )
             pos = self.bashwrapper.child.expect_exact([self.bashwrapper.prompt, self.bashwrapper.continuation_prompt, '\r\n'],
                                                       timeout=None)
-#            pos = self.bashwrapper.child.expect_exact([self.bashwrapper.prompt, 'zzz', '\r\n'] ,timeout=1)
-            os.system('echo ccc3 >>/tmp/nn')
             # Send standard output
             if pos == 2:
                 partial = self.bashwrapper.child.before + '\n'
@@ -82,7 +73,6 @@ class BashKernel(Kernel):
             if pos == 0:
                 break
             if pos == 1:
-# (maybe not a bug) self.send_response(self.iopub_socket, 'stream', {'name': 'stdout', 'text': 'BUG'} )
                 break
         return pos
         
@@ -97,7 +87,6 @@ class BashKernel(Kernel):
           default from the :class:`pexpect.spawn` object (default 30 seconds).
           None means to wait indefinitely.
         """
-        os.system('echo aaa >>/tmp/nn')
         # Split up multiline commands and feed them in bit-by-bit
         cmdlines = command.splitlines()
         # splitlines ignores trailing newlines - add it back in manually
@@ -106,17 +95,13 @@ class BashKernel(Kernel):
         if not cmdlines:
             raise ValueError("No command was given")
 
-        os.system('echo bbb >>/tmp/nn')
-        os.system('echo bbb2 >>/tmp/nn')
         self.bashwrapper.child.sendline(cmdlines[0])
         for line in cmdlines[1:]:
-            os.system('echo bbb3 >>/tmp/nn')
             self.output_while_waiting()
             self.bashwrapper.child.sendline(line)
 
         # Command was fully submitted, now wait for the next prompt
         if self.output_while_waiting() == 1:
-            os.system('echo ddd >>/tmp/nn')
             # We got the continuation prompt - command was incomplete
             self.bashwrapper.child.kill(signal.SIGINT)
             self.output_while_waiting()
