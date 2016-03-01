@@ -11,7 +11,6 @@ import re
 import signal
 import urllib
 import os
-import time
 
 __version__ = '0.2'
 
@@ -38,7 +37,7 @@ class CREPLWrapper(replwrap.REPLWrapper):
                                               timeout=None)
                 if pos == 2:
                     # if end of line, immediately send output so far
-                    partial = self.child.before + 'A\n'
+                    partial = self.child.before + '\n'
                     stream_content = {'name': 'stdout', 'text': partial}
                     self.bkernel.send_response(self.bkernel.iopub_socket, 'stream', stream_content)
                 else:
@@ -93,52 +92,6 @@ class BashKernel(Kernel):
 
         # Register Bash function to write image data to temporary file
         self.bashwrapper.run_command(image_setup_cmd)
-
-    def output_while_waiting(self):
-        while True:
-            pos = self.bashwrapper.child.expect_exact(['\r\n', self.bashwrapper.prompt, self.bashwrapper.continuation_prompt],
-                                                      timeout=None)
-            if pos == 0:
-                # if end of line, immediately send output so far
-                partial = self.bashwrapper.child.before + 'z\n'
-                stream_content = {'name': 'stdout', 'text': partial}
-                self.send_response(self.iopub_socket, 'stream', stream_content)
-            else:
-                break
-        return pos
-        
-    def nii_run_command(self, command, timeout=-1):
-        """Send a command to the REPL, wait for and return output.
-
-        :param str command: The command to send. Trailing newlines are not needed.
-          This should be a complete block of input that will trigger execution;
-          if a continuation prompt is found after sending input, :exc:`ValueError`
-          will be raised.
-        :param int timeout: How long to wait for the next prompt. -1 means the
-          default from the :class:`pexpect.spawn` object (default 30 seconds).
-          None means to wait indefinitely.
-        """
-        # Split up multiline commands and feed them in bit-by-bit
-        cmdlines = command.splitlines()
-        # splitlines ignores trailing newlines - add it back in manually
-        if command.endswith('\n'):
-            cmdlines.append('')
-        if not cmdlines:
-            raise ValueError("No command was given")
-
-        self.bashwrapper.child.sendline(cmdlines[0])
-        for line in cmdlines[1:]:
-            self.output_while_waiting()
-            self.bashwrapper.child.sendline(line)
-
-        # Command was fully submitted, now wait for the next prompt
-        if self.output_while_waiting() == 1:
-            # We got the continuation prompt - command was incomplete
-            self.bashwrapper.child.kill(signal.SIGINT)
-            self.output_while_waiting()
-            raise ValueError("Continuation prompt found - input was incomplete:\n"
-                             + command)
-        return self.bashwrapper.child.before
 
     def do_execute(self, code, silent, store_history=True,
                    user_expressions=None, allow_stdin=False):
@@ -221,7 +174,7 @@ class BashKernel(Kernel):
             cmd = 'compgen -cdfa %s' % token
             output = self.bashwrapper.run_command(cmd).rstrip()
             matches.extend(output.split())
-            
+
         if not matches:
             return default
         matches = [m for m in matches if m.startswith(token)]
@@ -229,5 +182,3 @@ class BashKernel(Kernel):
         return {'matches': sorted(matches), 'cursor_start': start,
                 'cursor_end': cursor_pos, 'metadata': dict(),
                 'status': 'ok'}
-
-
