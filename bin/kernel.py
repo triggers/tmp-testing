@@ -37,9 +37,7 @@ class CREPLWrapper(replwrap.REPLWrapper):
                                               timeout=None)
                 if pos == 2:
                     # if end of line, immediately send output so far
-                    partial = self.child.before + '\n'
-                    stream_content = {'name': 'stdout', 'text': partial}
-                    self.bkernel.send_response(self.bkernel.iopub_socket, 'stream', stream_content)
+                    self.bkernel.process_output(self.child.before + '\n')
                 else:
                     break
         else:
@@ -93,8 +91,28 @@ class BashKernel(Kernel):
         # Register Bash function to write image data to temporary file
         self.bashwrapper.run_command(image_setup_cmd)
 
+    def process_output(self, output):
+        if not self.silent:
+            image_filenames, output = extract_image_filenames(output)
+
+            # Send standard output
+            stream_content = {'name': 'stdout', 'text': output}
+            self.send_response(self.iopub_socket, 'stream', stream_content)
+
+            # Send images, if any
+            for filename in image_filenames:
+                try:
+                    data = display_data_for_image(filename)
+                except ValueError as e:
+                    message = {'name': 'stdout', 'text': str(e)}
+                    self.send_response(self.iopub_socket, 'stream', message)
+                else:
+                    self.send_response(self.iopub_socket, 'display_data', data)
+
+        
     def do_execute(self, code, silent, store_history=True,
                    user_expressions=None, allow_stdin=False):
+        self.silent = silent
         if not code.strip():
             return {'status': 'ok', 'execution_count': self.execution_count,
                     'payload': [], 'user_expressions': {}}
@@ -113,22 +131,7 @@ class BashKernel(Kernel):
             output = self.bashwrapper.child.before + 'Restarting Bash'
             self._start_bash()
 
-        if not silent:
-            image_filenames, output = extract_image_filenames(output)
-
-            # Send standard output
-            stream_content = {'name': 'stdout', 'text': output}
-            self.send_response(self.iopub_socket, 'stream', stream_content)
-
-            # Send images, if any
-            for filename in image_filenames:
-                try:
-                    data = display_data_for_image(filename)
-                except ValueError as e:
-                    message = {'name': 'stdout', 'text': str(e)}
-                    self.send_response(self.iopub_socket, 'stream', message)
-                else:
-                    self.send_response(self.iopub_socket, 'display_data', data)
+        self.process_output(output)
 
         if interrupted:
             return {'status': 'abort', 'execution_count': self.execution_count}
