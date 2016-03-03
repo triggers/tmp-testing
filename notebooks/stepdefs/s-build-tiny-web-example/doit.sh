@@ -27,8 +27,11 @@ ${ssh} <<EOF 2> /dev/null
 
 $(declare -f reset_job)
 $(declare -f check_client_exists)
+$(declare -f install_plugins)
 
 check_client_exists
+install_plugins "git git-client rbenv"
+service jenkins restart
 
 for job in ${jobs[@]} ; do
     reset_job \$job \$job.xml
