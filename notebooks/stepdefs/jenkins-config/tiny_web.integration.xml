@@ -39,11 +39,9 @@ cd ciscripts
 ls -l
 
 ipaddr=&quot;$(&lt; /metadata/meta-data/local-ipv4)&quot;
-app_img_id=&quot;wmi-4iplmj17&quot;
-db_img_id=&quot;wmi-ww6ryfuz&quot;
 
-APP_IMAGE_ID=${app_img_id} \
- DB_IMAGE_ID=${db_img_id} \
+APP_IMAGE_ID=&quot;${APP_IMAGE_ID}&quot; \
+ DB_IMAGE_ID=&quot;${DB_IMAGE_ID}&quot; \
     YUM_HOST=&quot;${ipaddr}&quot; \
 ./web3layers-ci.sh
 
