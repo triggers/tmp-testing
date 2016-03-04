@@ -9,17 +9,21 @@
 #  Create job, sample2 using predefined configuration file.
 
 ssh="ssh root@10.0.2.100 -i /home/centos/mykeypair"
+
+# Currently imagebuild needs to be the last job or the parameters for
+# parameterized trigger will not be set.
+
 jobs=(tiny_web.rspec
       tiny_web.rpmbuild
       tiny_web.rpmpublish
-      tiny_web.imagebuild
-      tiny_web.integration)
+      tiny_web.integration
+      tiny_web.imagebuild)
 
 xml_file=(tiny_web.rspec.xml
           tiny_web.rpmbuild.xml
           tiny_web.rpmpublish.xml
-          tiny_web.imagebuild.xml
-          tiny_web.integration.xml)
+          tiny_web.integration.xml
+          tiny_web.imagebuild.xml)
 
 xml_to_vm
 
@@ -29,21 +33,13 @@ $(declare -f reset_job)
 $(declare -f check_client_exists)
 $(declare -f install_plugins)
 
-
-mkdir /opt/axsh/
-cd /opt/axsh
-git clone https://github.com/axsh/wakame-vdc.git
-
 check_client_exists
-
 install_plugins "git git-client rbenv parameterized-trigger"
-service jenkins restart
-
-echo "Waiting for jenkins to restart."
-sleep 20 # TODO: Remove the need for this
 
 for job in ${jobs[@]} ; do
     reset_job \$job \$job.xml
 done
+
+service jenkins restart
 
 EOF
