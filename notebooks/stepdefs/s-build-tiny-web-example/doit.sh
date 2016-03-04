@@ -29,8 +29,14 @@ $(declare -f reset_job)
 $(declare -f check_client_exists)
 $(declare -f install_plugins)
 
+
+mkdir /opt/axsh/
+cd /opt/axsh
+git clone https://github.com/axsh/wakame-vdc.git
+
 check_client_exists
-install_plugins "git git-client rbenv"
+
+install_plugins "git git-client rbenv parameterized-trigger"
 service jenkins restart
 
 for job in ${jobs[@]} ; do
