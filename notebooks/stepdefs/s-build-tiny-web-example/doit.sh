@@ -39,6 +39,9 @@ check_client_exists
 install_plugins "git git-client rbenv parameterized-trigger"
 service jenkins restart
 
+echo "Waiting for jenkins to restart."
+sleep 20 # TODO: Remove the need for this
+
 for job in ${jobs[@]} ; do
     reset_job \$job \$job.xml
 done
