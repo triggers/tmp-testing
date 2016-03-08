@@ -10,7 +10,6 @@ ssh="ssh root@10.0.2.100 -i /home/centos/mykeypair"
 
 ${ssh} <<EOF 2> /dev/null
 
-service jenkins restart
 while ! curl -I -s http://localhost:8080/ | grep -q "200 OK" ; do
     echo "Waiting for jenkins..."
     sleep 3
