@@ -7,7 +7,7 @@
 #  Overwrite the jenkins created config.xml with predefined stored file.
 
 ssh="ssh root@10.0.2.100 -i /home/centos/mykeypair"
-jobs=tiny_web.imagebuild
+job=tiny_web.imagebuild
 xml_file=tiny_web.imagebuild.xml
 
 ${ssh} <<EOF 2> /dev/null
