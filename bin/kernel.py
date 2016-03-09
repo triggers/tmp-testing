@@ -142,8 +142,12 @@ class BashKernel(Kernel):
             exitcode = 1
 
         if exitcode:
-            return {'status': 'error', 'execution_count': self.execution_count,
-                    'ename': '', 'evalue': str(exitcode), 'traceback': []}
+            error_content = {'execution_count': self.execution_count,
+                             'ename': '', 'evalue': str(exitcode), 'traceback': []}
+
+            self.send_response(self.iopub_socket, 'error', error_content)
+            error_content['status'] = 'error'
+            return error_content
         else:
             return {'status': 'ok', 'execution_count': self.execution_count,
                     'payload': [], 'user_expressions': {}}
@@ -185,3 +189,5 @@ class BashKernel(Kernel):
         return {'matches': sorted(matches), 'cursor_start': start,
                 'cursor_end': cursor_pos, 'metadata': dict(),
                 'status': 'ok'}
+
+
