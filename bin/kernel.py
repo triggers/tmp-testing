@@ -34,7 +34,7 @@ class CREPLWrapper(replwrap.REPLWrapper):
         self.run_command(extra_init_cmd)
 
     def _expect_prompt(self, timeout=-1):
-        if timeout == None:
+        if timeout == None or timeout == 1:
             # Only one run_command below uses timeout=None, and it should receive continous output
             while True:
                 pos = self.child.expect_exact([self.prompt, self.continuation_prompt, '\r\n'],
