@@ -24,10 +24,14 @@ class CREPLWrapper(replwrap.REPLWrapper):
     def __init__(self, cmd_or_spawn, orig_prompt, prompt_change,
                  new_prompt=replwrap.PEXPECT_PROMPT,
                  continuation_prompt=replwrap.PEXPECT_CONTINUATION_PROMPT,
-                 extra_init_cmd=None, bkernelp=None):
-        self.bkernel = bkernelp
+                 extra_init_cmd=None, bkernel=None):
+        self.bkernel = bkernel
         replwrap.REPLWrapper.__init__(self, cmd_or_spawn, orig_prompt, prompt_change,
-                                      new_prompt, continuation_prompt, extra_init_cmd)
+                                      new_prompt, continuation_prompt)
+        # extra_init_cmd can be passed in to REPLWrapper.__init__, however
+        # that parameter is not supported in older versions of pexpect. Therefore
+        # extra_init_cmd is run here:
+        self.run_command(extra_init_cmd)
 
     def _expect_prompt(self, timeout=-1):
         if timeout == None:
@@ -79,15 +83,20 @@ class BashKernel(Kernel):
         # so that bash and its children are interruptible.
         sig = signal.signal(signal.SIGINT, signal.SIG_DFL)
         try:
-            bashrc = os.path.join(os.path.dirname(pexpect.__file__), 'bashrc.sh')
-            child = pexpect.spawn("bash", ['--rcfile', bashrc], echo=False,
-                                  encoding='utf-8')
-            self.bashwrapper = CREPLWrapper(child,
+            # Use CREPLWrapper, a subclass of REPLWrapper that gives
+            # incremental output specifically for bash_kernel.  Note
+            # that an earlier attempt code tried to use pexpect.spawn
+            # here failed because the encoding='utf-8' option was not
+            # supported on an earlier version of pexpect.
+            self.bashwrapper = CREPLWrapper("bash --norc",
                                             u'\$', u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''",
-                                            extra_init_cmd="export PAGER=cat", bkernelp=self)
+                                            extra_init_cmd="export PAGER=cat", bkernel=self)
         finally:
             signal.signal(signal.SIGINT, sig)
 
+        # Execute .bashrc via the wrapper provided with pexpect
+        bashrc = os.path.join(os.path.dirname(pexpect.__file__), 'bashrc.sh')
+        self.bashwrapper.run_command('source \'%s\'' % bashrc)
         # Register Bash function to write image data to temporary file
         self.bashwrapper.run_command(image_setup_cmd)
 
