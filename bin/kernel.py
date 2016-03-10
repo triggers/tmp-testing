@@ -22,12 +22,9 @@ from .images import (
 
 class CREPLWrapper(replwrap.REPLWrapper):
     def __init__(self, cmd_or_spawn, orig_prompt, prompt_change,
-                 new_prompt=replwrap.PEXPECT_PROMPT,
-                 continuation_prompt=replwrap.PEXPECT_CONTINUATION_PROMPT,
                  extra_init_cmd=None, bkernel=None):
         self.bkernel = bkernel
-        replwrap.REPLWrapper.__init__(self, cmd_or_spawn, orig_prompt, prompt_change,
-                                      new_prompt, continuation_prompt)
+        replwrap.REPLWrapper.__init__(self, cmd_or_spawn, orig_prompt, prompt_change)
         # extra_init_cmd can be passed in to REPLWrapper.__init__, however
         # that parameter is not supported in older versions of pexpect. Therefore
         # extra_init_cmd is run here:
