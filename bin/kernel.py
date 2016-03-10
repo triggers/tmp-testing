@@ -20,6 +20,10 @@ from .images import (
     extract_image_filenames, display_data_for_image, image_setup_cmd
 )
 
+# An attempt was made to make this subclass for incremental output
+# work for the latest pexpect (ver 4.1), as well as pexpect version
+# 3.3, which gets installed when using the Anaconda installation
+# method that is recommended on the Jupyter installation page.
 class CREPLWrapper(replwrap.REPLWrapper):
     def __init__(self, cmd_or_spawn, orig_prompt, prompt_change,
                  extra_init_cmd=None, bkernel=None):
@@ -32,18 +36,22 @@ class CREPLWrapper(replwrap.REPLWrapper):
 
     def _expect_prompt(self, timeout=-1):
         if timeout == None or timeout == 1:
-            # Only one run_command below uses timeout=None, and it should receive continous output
+            # "None" means we are executing code from a Jupyter cell.  The "timeout==1" case
+            # is a workaround for a problem in pexpect 3.3 that breaks incremental output.
+            # In either case, do incremental output:
             while True:
                 pos = self.child.expect_exact([self.prompt, self.continuation_prompt, '\r\n'],
                                               timeout=None)
                 if pos == 2:
-                    # if end of line, immediately send output so far
+                    # End of line received, so immediately send output received so far
                     self.bkernel.process_output(self.child.before + '\n')
                 else:
                     break
         else:
-            # The other run_commands use other timeout values, and all output should be collected
+            # Otherwise, use existing non-incremental code
             pos = replwrap.REPLWrapper._expect_prompt(self, timeout=timeout)
+
+        # Prompt received, so return normally
         return pos
 
 class BashKernel(Kernel):
@@ -87,11 +95,11 @@ class BashKernel(Kernel):
             self.bashwrapper = CREPLWrapper("bash --norc",
                                             u'\$', u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''",
                                             extra_init_cmd="export PAGER=cat", bkernel=self)
+            # Execute .bashrc via the wrapper provided with pexpect
+            bashrc = os.path.join(os.path.dirname(pexpect.__file__), 'bashrc.sh')
         finally:
             signal.signal(signal.SIGINT, sig)
 
-        # Execute .bashrc via the wrapper provided with pexpect
-        bashrc = os.path.join(os.path.dirname(pexpect.__file__), 'bashrc.sh')
         self.bashwrapper.run_command('source \'%s\'' % bashrc)
         # Register Bash function to write image data to temporary file
         self.bashwrapper.run_command(image_setup_cmd)
@@ -124,6 +132,7 @@ class BashKernel(Kernel):
 
         interrupted = False
         try:
+            # Note: timeout=None has special meaning for CREPLWrapper
             output = self.bashwrapper.run_command(code.rstrip(), timeout=None)
         except ValueError:
             output = self.bashwrapper.child.before
