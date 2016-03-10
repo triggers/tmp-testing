@@ -3,14 +3,13 @@ from pexpect import replwrap, EOF
 import pexpect
 
 from subprocess import check_output
-from os import unlink
+from os import path
 
 import base64
 import imghdr
 import re
 import signal
 import urllib
-import os
 
 __version__ = '0.2'
 
@@ -95,12 +94,13 @@ class BashKernel(Kernel):
             self.bashwrapper = IREPLWrapper("bash --norc",
                                             u'\$', u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''",
                                             extra_init_cmd="export PAGER=cat", bkernel=self)
-            # Execute .bashrc via the wrapper provided with pexpect
-            bashrc = os.path.join(os.path.dirname(pexpect.__file__), 'bashrc.sh')
+            # Execute .bashrc via the bashrc.sh wrapper provided with pexpect.
+            # (source command fails with harmless error if bashrc.sh is not installed)
+            bashrc = path.join(path.dirname(pexpect.__file__), 'bashrc.sh')
+            self.bashwrapper.run_command('source \'%s\'' % bashrc)
         finally:
             signal.signal(signal.SIGINT, sig)
 
-        self.bashwrapper.run_command('source \'%s\'' % bashrc)
         # Register Bash function to write image data to temporary file
         self.bashwrapper.run_command(image_setup_cmd)
 
