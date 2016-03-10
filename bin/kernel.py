@@ -43,8 +43,7 @@ class CREPLWrapper(replwrap.REPLWrapper):
                     break
         else:
             # The other run_commands use other timeout values, and all output should be collected
-            pos = self.child.expect_exact([self.prompt, self.continuation_prompt],
-                                          timeout=None)
+            pos = replwrap.REPLWrapper._expect_prompt(self, timeout=timeout)
         return pos
 
 class BashKernel(Kernel):
