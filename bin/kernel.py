@@ -135,6 +135,11 @@ class BashKernel(Kernel):
             # Note: timeout=None has special meaning for IREPLWrapper
             output = self.bashwrapper.run_command(code.rstrip(), timeout=None)
         except ValueError:
+            # This handler is for the NII project and is needed because the
+            # extend_bashkernel.source code always causes a ValueError.
+            # Without this handler, everything still works except that the
+            # Jupyter web page keeps showing [*], indicating that an error
+            # has occurred.
             output = self.bashwrapper.child.before
         except KeyboardInterrupt:
             self.bashwrapper.child.sendintr()
