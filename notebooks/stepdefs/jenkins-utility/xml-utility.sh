@@ -5,7 +5,6 @@ function replace_git_repo() {
     local default_repo=$(cat /home/centos/notebooks/stepdefs/jenkins-config/${file} | grep -oP '(?<=<url>).*?(?=</url>)')
 
     ${ssh} <<EOF 2> /dev/null
-        echo ${user_git_repo}
         sed -i "s@${default_repo}@${user_git_repo}@g" /home/${file}
 EOF
 }
