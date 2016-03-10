@@ -42,9 +42,12 @@ class IREPLWrapper(replwrap.REPLWrapper):
                 pos = self.child.expect_exact([self.prompt, self.continuation_prompt, '\r\n'],
                                               timeout=None)
                 if pos == 2:
-                    # End of line received, so immediately send output received so far
+                    # End of line received
                     self.bkernel.process_output(self.child.before + '\n')
                 else:
+                    if len(self.child.before) != 0:
+                        # prompt received, but partial line precedes it
+                        self.bkernel.process_output(self.child.before)
                     break
         else:
             # Otherwise, use existing non-incremental code
@@ -122,7 +125,7 @@ class BashKernel(Kernel):
                 else:
                     self.send_response(self.iopub_socket, 'display_data', data)
 
-        
+
     def do_execute(self, code, silent, store_history=True,
                    user_expressions=None, allow_stdin=False):
         self.silent = silent
@@ -134,13 +137,14 @@ class BashKernel(Kernel):
         try:
             # Note: timeout=None has special meaning for IREPLWrapper
             output = self.bashwrapper.run_command(code.rstrip(), timeout=None)
+            output = "" # output was already sent by IREPLWrapper
         except ValueError:
             # This handler is for the NII project and is needed because the
             # extend_bashkernel.source code always causes a ValueError.
             # Without this handler, everything still works except that the
             # Jupyter web page keeps showing [*], indicating that an error
             # has occurred.
-            output = self.bashwrapper.child.before
+            pass
         except KeyboardInterrupt:
             self.bashwrapper.child.sendintr()
             interrupted = True
