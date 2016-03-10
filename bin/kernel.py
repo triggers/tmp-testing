@@ -24,7 +24,7 @@ from .images import (
 # work for the latest pexpect (ver 4.1), as well as pexpect version
 # 3.3, which gets installed when using the Anaconda installation
 # method that is recommended on the Jupyter installation page.
-class CREPLWrapper(replwrap.REPLWrapper):
+class IREPLWrapper(replwrap.REPLWrapper):
     def __init__(self, cmd_or_spawn, orig_prompt, prompt_change,
                  extra_init_cmd=None, bkernel=None):
         self.bkernel = bkernel
@@ -87,12 +87,12 @@ class BashKernel(Kernel):
         # so that bash and its children are interruptible.
         sig = signal.signal(signal.SIGINT, signal.SIG_DFL)
         try:
-            # Use CREPLWrapper, a subclass of REPLWrapper that gives
+            # Use IREPLWrapper, a subclass of REPLWrapper that gives
             # incremental output specifically for bash_kernel.  Note
             # that an earlier attempt code tried to use pexpect.spawn
             # here failed because the encoding='utf-8' option was not
             # supported on an earlier version of pexpect.
-            self.bashwrapper = CREPLWrapper("bash --norc",
+            self.bashwrapper = IREPLWrapper("bash --norc",
                                             u'\$', u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''",
                                             extra_init_cmd="export PAGER=cat", bkernel=self)
             # Execute .bashrc via the wrapper provided with pexpect
@@ -132,7 +132,7 @@ class BashKernel(Kernel):
 
         interrupted = False
         try:
-            # Note: timeout=None has special meaning for CREPLWrapper
+            # Note: timeout=None has special meaning for IREPLWrapper
             output = self.bashwrapper.run_command(code.rstrip(), timeout=None)
         except ValueError:
             output = self.bashwrapper.child.before
