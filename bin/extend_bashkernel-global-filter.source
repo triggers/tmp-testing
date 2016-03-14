@@ -197,11 +197,15 @@ while sleep 0.2; do
         stepdir="$basedir/stepdefs/s-$stepid"
         if [ -d "$stepdir" ]; then
 	    if [ "$global_mode" != "none" ]; then
-		command="$stepdir/$global_mode.sh"
-		if [ -f "$command" ]; then
-                    echo "$command" >"$jd/command"
-                    echo "$input" | bash $command | tee "$jd/output" 2>&1
-                    echo "$?" >"$jd/rc"
+		gcommand="$stepdir/$global_mode.sh"
+		if [ -f "$gcommand" ] && command="$(get_cell_command "$stepid" "$input")"; then
+		    if [[ "$command" == $gcommand* ]]; then
+			   echo "$command" >"$jd/command"
+			   echo "$input" | bash $command | tee "$jd/output" 2>&1
+			   echo "$?" >"$jd/rc"
+		    else
+			   echo "Skipping Cell" | tee "$jd/output" 2>&1
+		    fi
                     didcmd=true
 		else
                     echo "No $global_mode mode for this cell" | tee "$jd/output" 2>&1
