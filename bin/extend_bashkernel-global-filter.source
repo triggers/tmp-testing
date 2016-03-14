@@ -196,15 +196,21 @@ while sleep 0.2; do
         # set -x
         stepdir="$basedir/stepdefs/s-$stepid"
         if [ -d "$stepdir" ]; then
+	    ## TODO: demoable, but needs rethinking and rewriting
 	    if [ "$global_mode" != "none" ]; then
 		gcommand="$stepdir/$global_mode.sh"
 		if [ -f "$gcommand" ] && command="$(get_cell_command "$stepid" "$input")"; then
 		    if [[ "$command" == $gcommand* ]]; then
-			   echo "$command" >"$jd/command"
-			   echo "$input" | bash $command | tee "$jd/output" 2>&1
-			   echo "$?" >"$jd/rc"
+			echo "$command" >"$jd/command"
+			echo "(doing cell)"
+			echo "$input" | bash $command | tee "$jd/output" 2>&1
+			echo "$?" >"$jd/rc"
+			rm -f "$command".lastoutput
+			ln -s "$jd/output" "$command".lastoutput
 		    else
-			   echo "Skipping Cell" | tee "$jd/output" 2>&1
+			( echo "(Skipping Cell)"
+			  cat "$command".lastoutput 2>/dev/null
+			) | tee "$jd/output" 2>&1
 		    fi
                     didcmd=true
 		else
