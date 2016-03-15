@@ -2,10 +2,10 @@
 
 thescript="$(cat <<'EEE'
 # This installs the Oracle version of Java.  The RPM file was
-# already downloaded to /home/centos/notebooks/downloads
+# already downloaded to /home/centos/notebooks/.downloads
 
 : ${IP:=10.0.2.100}
-cd /home/centos/notebooks/downloads
+cd /home/centos/notebooks/.downloads
 tar c jdk-8u73-linux-x64.rpm | ssh -qi /home/centos/mykeypair root@$IP tar xv
 
 ssh -qi /home/centos/mykeypair root@$IP <<EOS
