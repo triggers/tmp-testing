@@ -91,13 +91,13 @@ echo -n "$PS1"
 basedir="$(pwd)"
 new_job_dir()
 {
-    mkdir -p "$basedir/jobs"
+    mkdir -p "$basedir/.jobs"
     jobn=1000
-    while [ -d "$basedir/jobs/j-$jobn" ]; do
+    while [ -d "$basedir/.jobs/j-$jobn" ]; do
         (( jobn++ ))
     done
-    mkdir "$basedir/jobs/j-$jobn"
-    echo "$basedir/jobs/j-$jobn"
+    mkdir "$basedir/.jobs/j-$jobn"
+    echo "$basedir/.jobs/j-$jobn"
 }
 
 get_step_id()
