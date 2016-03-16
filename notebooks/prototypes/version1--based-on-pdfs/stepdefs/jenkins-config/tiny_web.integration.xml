@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@2.4.2">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>https://github.com/toros11/tiny_web_example.git</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+set -eux
+set -o pipefail
+
+export PATH=$PATH:/opt/axsh/wakame-vdc/client/mussel/bin
+
+cd ciscripts
+ls -l
+
+ipaddr=&quot;$(&lt; /metadata/meta-data/local-ipv4)&quot;
+
+APP_IMAGE_ID=&quot;${APP_IMAGE_ID}&quot; \
+ DB_IMAGE_ID=&quot;${DB_IMAGE_ID}&quot; \
+    YUM_HOST=&quot;${ipaddr}&quot; \
+./web3layers-ci.sh
+
+echo ${ipaddr}</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <ruby-proxy-object>
+      <ruby-object ruby-class="Jenkins::Tasks::BuildWrapperProxy" pluginid="rbenv">
+        <object ruby-class="RbenvWrapper" pluginid="rbenv">
+          <ruby__build__repository pluginid="rbenv" ruby-class="String">https://github.com/sstephenson/ruby-build.git</ruby__build__repository>
+          <rbenv__repository pluginid="rbenv" ruby-class="String">https://github.com/sstephenson/rbenv.git</rbenv__repository>
+          <ruby__build__revision pluginid="rbenv" ruby-class="String">master</ruby__build__revision>
+          <rbenv__root pluginid="rbenv" ruby-class="String">$HOME/.rbenv</rbenv__root>
+          <version pluginid="rbenv" ruby-class="String">2.0.0-p598</version>
+          <rbenv__revision pluginid="rbenv" ruby-class="String">master</rbenv__revision>
+          <gem__list pluginid="rbenv" ruby-class="String">bundler,rake</gem__list>
+          <ignore__local__version ruby-class="FalseClass" pluginid="rbenv"/>
+        </object>
+        <pluginid pluginid="rbenv" ruby-class="String">rbenv</pluginid>
+      </ruby-object>
+    </ruby-proxy-object>
+  </buildWrappers>
+</project>
