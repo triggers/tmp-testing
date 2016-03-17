@@ -144,7 +144,7 @@ class BashKernel(Kernel):
             # Without this handler, everything still works except that the
             # Jupyter web page keeps showing [*], indicating that an error
             # has occurred.
-            pass
+            output="" # not initialized because of exception, so do it here
         except KeyboardInterrupt:
             self.bashwrapper.child.sendintr()
             interrupted = True
