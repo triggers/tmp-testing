@@ -29,7 +29,7 @@ exec 77<"$BASH_SOURCE"
 exec 9<&1
 echo $$ >/tmp/bpid
 
-echopat='*echo $?*'
+echopat='echo $\?'
 
 blockingread()
 {
@@ -166,6 +166,21 @@ get_cell_command()
 
 global_mode=none
 
+set_if_cell_includes()
+{
+    token="$1"
+    var_name="$2"
+    if [[ "$input" == *"$token"* ]] ; then
+        set_value=true
+        read value <<< "${input#*$token}"
+        value="${value//\"/}"
+        value="${value//\'/}"
+        export "$var_name"="$value"
+        var_name="${var_name//_/ }"
+        echo "Changing ${var_name,,} to '$value'"
+    fi
+}
+
 # for testing:
 while sleep 0.2; do
     ls -l /proc/$BASHPID/fd >>/tmp/sbash.log
@@ -178,15 +193,17 @@ while sleep 0.2; do
       break
     fi
 
-    if [[ "$input" == *set-global-evaluation-mode* ]]; then
-	after="${input#*set-global-evaluation-mode}"
-	read themode therest <<<"$after"
-	themode="${themode//\"/}"
-	themode="${themode//\'/}"
-	echo "Changing global mode to '$themode'"
-	export global_mode="$themode"
-	echo -n "$PS1"
-	continue
+    set_value=false
+
+    set_if_cell_includes set-global-evaluation-mode global_mode
+    set_if_cell_includes set-github-user GITHUB_USER
+    set_if_cell_includes set-github-repo GITHUB_REPO
+    set_if_cell_includes set-hipchat-id HIPCHAT_ID
+    set_if_cell_includes set-hipchat-token HIPCHAT_TOKEN
+
+    if $set_value ; then
+         echo -n "$PS1"
+         continue
     fi
 
     jd="$(new_job_dir)"
@@ -231,8 +248,19 @@ while sleep 0.2; do
 	# (Note: running the file in bash through standard input allows
 	#  a cell code to have an ssh line, followed by lines that
 	#  will be sent to ssh session.)
-	cat "$jd/input" | bash | tee "$jd/output" 2>&1
+	exec 78> >(exec tee -a "$jd/output" 2>&1)
+	bgtee=$!
+
+	# The next line "sources" the whole cell, so local variable
+	# assignments will persist in this process
+	source "$jd/input" >&78 2>&1
         echo "$?" >"$jd/rc"
+	
+	exec 78>&-  # close the tee
+	# the tee is a subprocess of this process, but for some
+	# reason the wait call does not agree, so the next
+	# line is a workaround to wait until sure that tee has finished
+	while [ -d /proc/$bgtee ] ; do sleep 0.1 ; done
     fi
     echo -n "$PS1"
 done
