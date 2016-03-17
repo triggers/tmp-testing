@@ -29,7 +29,7 @@ exec 77<"$BASH_SOURCE"
 exec 9<&1
 echo $$ >/tmp/bpid
 
-echopat='*echo $?*'
+echopat='echo $\?'
 
 blockingread()
 {
