@@ -164,13 +164,6 @@ echo "c.NotebookApp.ip = '*'" >>"$JCFG"
 mkdir notebooks
 echo "c.NotebookApp.notebook_dir = 'notebooks'" >>"$JCFG"
 
-# The config page at http://192.168.2.24:18888/nbextensions started
-# returning a 404 error.  Here is the workaround:
-# TODO: why was this not necessary before???
-# ref: https://github.com/ipython-contrib/IPython-notebook-extensions/issues/374
-# ref: https://github.com/ipython-contrib/IPython-notebook-extensions/issues/527
-echo 'c.NotebookApp.server_extensions = ["nbextensions"]' >>"$JCFG"
-
 # autostart on boot
 echo "(setsid su - centos -c '/home/centos/anaconda3/bin/jupyter notebook' > /var/log/jupyter.log 2>&1) &" | \
    sudo bash -c "cat >>/etc/rc.local"
