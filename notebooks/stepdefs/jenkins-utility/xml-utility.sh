@@ -14,13 +14,13 @@ function xml_save_backup () {
     local element_name="${2}"
     local param="${3}"
 
-     if [[ "${param}" == *"node"* ]] ; then
+     if [[ "${param}" == *"multi"* ]] ; then
          config_param=$(sed -n '/<'${element_name}'/,/<\/'${element_name}'>/p' "${file}")
      else
          config_param=$(grep -oP '(?<=<'${element_name}'>).*?(?=</'${element_name}'>)' "${file}")
      fi
 
-    echo "${param}=${config_param}"
+     echo "${config_param}" > /tmp/"${element_name}".data
 }
 
 function xml_load_backup () {
@@ -60,7 +60,7 @@ function xml_load_backup () {
     replacedit=false
     while IFS= read -r ln; do
         case "$ln" in
-            $pattern1a | $pattern1b | $pattern1b)
+            $pattern1a | $pattern1b | $pattern1c)
                 $replacedit && reportfailed "target element $elementname appeared twice"
                 # just replace this one line
                 printf "%s\n" "$replacementtext"
