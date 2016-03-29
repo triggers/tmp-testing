@@ -12,22 +12,16 @@ function xml_to_vm() {
 function xml_save_backup () {
     local file="${1}"
     local element_name="${2}"
-    local param="${3}"
+    local xpath="${3}"
 
-     if [[ "${param}" == *"multi"* ]] ; then
-         config_param=$(sed -n '/<'${element_name}'/,/<\/'${element_name}'>/p' "${file}")
-     else
-         config_param=$(grep -oP '(?<=<'${element_name}'>).*?(?=</'${element_name}'>)' "${file}")
-     fi
-
-     echo "${config_param}" > /tmp/"${element_name}".data
+    xml_data=$(xmllint "${file}"  --shell <<<'cat '${xpath}'' | ( read  ln ; v="$(cat)" ; echo "${v%$'\n'*}" ))
+    echo "${xml_data}" > /tmp/"${element_name}".data
 }
 
 function xml_load_backup () {
     targetfile="$1"
     elementname="$2"
     replacementtext="$3"
-
     reportfailed()
     {
         echo "Script failed...exiting. ($*)" 1>&2

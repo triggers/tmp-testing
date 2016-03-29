@@ -23,6 +23,6 @@ EOF
 
 [[ ${#xml_nodes} -eq 0 ]] || {
     for param in "${xml_nodes[@]}" ; do
-        load_config "${param%%.*}" "$(cat $(dirname $0)/xml-data/${param})"
+        load_config "${param%%@*}" "$(cat $(dirname $0)/xml-data/${param%%@*}.data-student)"
     done
 }
