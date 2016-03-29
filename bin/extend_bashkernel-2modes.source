@@ -211,27 +211,35 @@ while sleep 0.2; do
 
     didcmd=false
     if stepid="$(get_step_id "$input")"; then
-        # set -x
+        # the cell is labeled with a step name
         stepdir="$basedir/stepdefs/s-$stepid"
         if [ -d "$stepdir" ]; then
-	    if [ "$global_mode" != "none" ]; then
-		command="$stepdir/$global_mode.sh"
-		if [ -f "$command" ]; then
-                    echo "$command" >"$jd/command"
-                    echo "$input" | bash $command | tee "$jd/output" 2>&1
-                    echo "$?" >"$jd/rc"
-                    didcmd=true
-		else
+	    # and that step name exists
+	    case "$global_mode" in
+		my-script)
+		    do-my-script-logic
+		    ;;
+		provided-script)
+		    do-provided-script-logic
+		    ;;
+		none)
+		    if command="$(get_cell_command "$stepid" "$input")"; then
+			# mode exists and global_mode=none, so do exactly what the
+			# mode says to do
+			echo "$command" >"$jd/command"
+			echo "$input" | bash $command | tee "$jd/output" 2>&1
+			echo "$?" >"$jd/rc"
+			didcmd=true
+		    else
+			echo "Mode not implemented for this step" | tee "$jd/output" 2>&1
+		    fi
+		    ;;
+		*)
                     echo "No $global_mode mode for this cell" | tee "$jd/output" 2>&1
                     didcmd=true
-		fi
-            elif command="$(get_cell_command "$stepid" "$input")"; then
-                echo "$command" >"$jd/command"
-                echo "$input" | bash $command | tee "$jd/output" 2>&1
-                echo "$?" >"$jd/rc"
-                didcmd=true
-            fi
-        fi
+		    ;;
+	    esac
+	fi
     fi
     if ! $didcmd; then
         # for default, execute code like normal bash cell
