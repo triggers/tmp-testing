@@ -8,7 +8,7 @@
 function save_config() {
     local file="/var/lib/jenkins/jobs/${job}/config.xml"
     local element_name="${1}" xpath="${2}"
-    ssh -i /home/centos/mykeypair root@10.0.2.100 <<EOF  # 2> /dev/null
+    ssh -i /home/centos/mykeypair root@10.0.2.100 <<EOF 2> /dev/null
         $(declare -f xml_save_backup)
         xml_save_backup "${file}" "${element_name}" "${xpath}"
 EOF
