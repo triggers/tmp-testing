@@ -185,7 +185,23 @@ set_if_cell_includes()
 
 do-my-script-logic()
 {
-    echo "do-my-script-logic not yet implemented" | tee "$jd/output" 2>&1
+    if command="$(get_cell_command "$stepid" "$input")"; then
+	case "$command" in
+	    */load.sh | */template.sh | */check.sh )
+		# these modes are done, because global_mode = "my-script"
+		echo "$command" >"$jd/command"
+		echo "$input" | bash $command | tee "$jd/output" 2>&1
+		echo "$?" >"$jd/rc"
+		;;
+	    *)
+		echo "Cell being skipped because global mode is $global_mode." | tee "$jd/output" 2>&1
+		;;
+	    # NOTE: myscript cells themself are run, but that is done
+	    # by code elsewhere that handles unmarked cells
+	esac
+    else
+	echo "Mode not implemented for this step" | tee "$jd/output" 2>&1
+    fi
 }
 
 do-provided-script-logic()
