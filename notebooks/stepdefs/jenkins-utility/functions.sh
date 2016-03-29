@@ -1,5 +1,4 @@
 #!/bin/bash
-. /home/centos/notebooks/stepdefs/jenkins-utility/xml-utility.sh
 
 original='\033[0m'
 red='\033[00;31m'
@@ -7,7 +6,7 @@ green='\033[00;32m'
 check_mark="[${green}\xE2\x9C\x93${original}]"
 cross_mark="[${red}\xE2\x9C\x97${original}]"
 
-function check_client_exists () {
+function install_client () {
     [[ ! -f jenkins-cli.jar ]] &&
         curl -O http://localhost:8080/jnlpJars/jenkins-cli.jar
 }
@@ -28,9 +27,11 @@ function install_plugins () {
     done
 }
 
-function check_empty () {
-    local cfg=${1} param=${2}
-    [[ -z $(cat /var/lib/jenkins/${cfg} | grep -oP '(?<=<'${param}'>).*?(?=</'${param}'>)') ]]
+function check_not_empty () {
+    local job=${1} element=${2}
+    local content=$(grep -oP '(?<=<'${element}'>).*?(?=</'${element}'>)' /var/lib/jenkins/jobs/${job}/config.xml)
+
+    [[ ! -z $content ]]
 }
 
 function reset_job () {
