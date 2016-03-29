@@ -7,7 +7,8 @@
 
 function save_config() {
     local file="/var/lib/jenkins/jobs/${job}/config.xml"
-    local element_name="${1}" xpath="${2}"
+    local xpath="${1}" element_name="${xpath##*/}"
+
     ssh -i /home/centos/mykeypair root@10.0.2.100 <<EOF 2> /dev/null
         $(declare -f xml_save_backup)
         xml_save_backup "${file}" "${element_name}" "${xpath}"
@@ -16,8 +17,8 @@ EOF
 }
 
 echo "Saving progress..."
-[[ ${#xml_nodes} -eq 0 ]] || {
-    for param in "${xml_nodes[@]}" ; do
-        save_config "${param%%@*}" "${param#*@}"
+[[ ${#xpaths} -eq 0 ]] || {
+    for xpath in "${xpaths[@]}" ; do
+        save_config "${xpath}"
     done
 }

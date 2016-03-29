@@ -22,11 +22,11 @@ EOF
 }
 
 echo "Loading progress..."
-[[ ${#xml_nodes} -eq 0 ]] || {
-    for param in "${xml_nodes[@]}" ; do
-        student_file="$(dirname $0)/xml-data/${param%%@*}.data-student"
+[[ ${#xpaths} -eq 0 ]] || {
+    for xpath in "${xpaths[@]}" ; do
+        student_file="$(dirname $0)/xml-data/${xpath##*/}.data-student"
         [[ -f ${student_file} ]] && {
-            load_config "${param%%@*}" "$(cat ${student_file})"
+            load_config "${xpath##*/}" "$(cat ${student_file})"
         }
     done
 }
