@@ -183,11 +183,14 @@ set_if_cell_includes()
     fi
 }
 
+# the "${command%% *}" is necessary because command may have parameters
+# (although for now this is an unused feature)
+
 do-my-script-logic()
 {
     if command="$(get_cell_command "$stepid" "$input")"; then
-	case "$command" in
-	    */load.sh | */template.sh | */check.sh )
+	case "${command%% *}" in
+	    */load.sh | */template.sh | */check.sh)
 		# these modes are done, because global_mode = "my-script"
 		echo "$command" >"$jd/command"
 		echo "$input" | bash $command | tee "$jd/output" 2>&1
@@ -207,8 +210,8 @@ do-my-script-logic()
 do-provided-script-logic()
 {
     if command="$(get_cell_command "$stepid" "$input")"; then
-	case "$command" in
-	    */provided-script.sh | */template.sh | */check.sh )
+	case "${command%% *}" in
+	    */provided-script.sh | */template.sh | */check.sh)
 		# these modes are done, because global_mode = "my-script"
 		echo "$command" >"$jd/command"
 		echo "$input" | bash $command | tee "$jd/output" 2>&1
