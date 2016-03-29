@@ -12,9 +12,10 @@ function save_config() {
         $(declare -f xml_save_backup)
         xml_save_backup "${file}" "${element_name}" "${xpath}"
 EOF
-    scp -i /home/centos/mykeypair root@10.0.2.100:/tmp/"${element_name}".data $(dirname $0)/xml-data/"${element_name}".data-student &> /dev/null
+    scp -i /home/centos/mykeypair root@10.0.2.100:/tmp/"${element_name}".data-student $(dirname $0)/xml-data/ &> /dev/null
 }
 
+echo "Saving progress..."
 [[ ${#xml_nodes} -eq 0 ]] || {
     for param in "${xml_nodes[@]}" ; do
         save_config "${param%%@*}" "${param#*@}"
