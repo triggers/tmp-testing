@@ -181,6 +181,16 @@ set_if_cell_includes()
     fi
 }
 
+do-my-script-logic()
+{
+    echo "do-my-script-logic not yet implemented" | tee "$jd/output" 2>&1
+}
+
+do-provided-script-logic()
+{
+    echo "do-provided-script-logic not yet implemented" | tee "$jd/output" 2>&1
+}
+
 # for testing:
 while sleep 0.2; do
     ls -l /proc/$BASHPID/fd >>/tmp/sbash.log
@@ -239,26 +249,35 @@ while sleep 0.2; do
                     didcmd=true
 		    ;;
 	    esac
+	else
+	    echo "Step name is not implemented" | tee "$jd/output" 2>&1
 	fi
-    fi
-    if ! $didcmd; then
-        # for default, execute code like normal bash cell
-	# (Note: running the file in bash through standard input allows
-	#  a cell code to have an ssh line, followed by lines that
-	#  will be sent to ssh session.)
-	exec 78> >(exec tee -a "$jd/output" 2>&1)
-	bgtee=$!
+    else
+	# it is an unmarked cell, so assume it is a my-script cell
+	case "$global_mode" in
+	    my-script)
+		# for default, execute code like normal bash cell
+		# (Note: running the file in bash through standard input allows
+		#  a cell code to have an ssh line, followed by lines that
+		#  will be sent to ssh session.)
+		exec 78> >(exec tee -a "$jd/output" 2>&1)
+		bgtee=$!
 
-	# The next line "sources" the whole cell, so local variable
-	# assignments will persist in this process
-	source "$jd/input" >&78 2>&1
-        echo "$?" >"$jd/rc"
-	
-	exec 78>&-  # close the tee
-	# the tee is a subprocess of this process, but for some
-	# reason the wait call does not agree, so the next
-	# line is a workaround to wait until sure that tee has finished
-	while [ -d /proc/$bgtee ] ; do sleep 0.1 ; done
+		# The next line "sources" the whole cell, so local variable
+		# assignments will persist in this process
+		source "$jd/input" >&78 2>&1
+		echo "$?" >"$jd/rc"
+		
+		exec 78>&-  # close the tee
+		# the tee is a subprocess of this process, but for some
+		# reason the wait call does not agree, so the next
+		# line is a workaround to wait until sure that tee has finished
+		while [ -d /proc/$bgtee ] ; do sleep 0.1 ; done
+		;;
+	    *)
+		echo "Cell being skipped because global mode is $global_mode." | tee "$jd/output" 2>&1
+		;;
+	esac
     fi
     echo -n "$PS1"
 done
