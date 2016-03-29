@@ -21,8 +21,12 @@ XML_BLOCK
 EOF
 }
 
+echo "Loading progress..."
 [[ ${#xml_nodes} -eq 0 ]] || {
     for param in "${xml_nodes[@]}" ; do
-        load_config "${param%%@*}" "$(cat $(dirname $0)/xml-data/${param%%@*}.data-student)"
+        student_file="$(dirname $0)/xml-data/${param%%@*}.data-student"
+        [[ -f ${student_file} ]] && {
+            load_config "${param%%@*}" "$(cat ${student_file})"
+        }
     done
 }
