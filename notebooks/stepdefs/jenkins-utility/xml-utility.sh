@@ -15,7 +15,7 @@ function xml_save_backup () {
     local xpath="${3}"
     local xml_data=$(xmllint "${file}"  --shell <<<'cat '${xpath}'' | ( read  ln ; v="$(cat)" ; echo "${v%$'\n'*}" ))
 
-    [[ -z ${xml_data} ]] && echo "${xml_data}" > /tmp/"${element_name}".data-student
+    [[ -z ${xml_data} ]] || echo "${xml_data}" > /tmp/"${element_name}".data-student
 }
 
 function xml_load_backup () {
