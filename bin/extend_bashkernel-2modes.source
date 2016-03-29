@@ -103,7 +103,8 @@ new_job_dir()
 
 get_step_id()
 {
-    # (version 1) first line of the form: # (
+    # (version 1) line of the form: # (
+    # but only if it is the first line
     pat='#(*'
     while read ln; do
         nospaces="${ln// /}"
@@ -113,6 +114,7 @@ get_step_id()
             echo "$id"
             return 0
         fi
+	break # give up if not on the first line
     done <<<"$1"
     # (version 2) first line of the form: # Task: thetoken
     pat='#[tT]ask:*'
