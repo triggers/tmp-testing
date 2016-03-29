@@ -206,7 +206,21 @@ do-my-script-logic()
 
 do-provided-script-logic()
 {
-    echo "do-provided-script-logic not yet implemented" | tee "$jd/output" 2>&1
+    if command="$(get_cell_command "$stepid" "$input")"; then
+	case "$command" in
+	    */provided-script.sh | */template.sh | */check.sh )
+		# these modes are done, because global_mode = "my-script"
+		echo "$command" >"$jd/command"
+		echo "$input" | bash $command | tee "$jd/output" 2>&1
+		echo "$?" >"$jd/rc"
+		;;
+	    *)
+		echo "Cell being skipped because global mode is $global_mode." | tee "$jd/output" 2>&1
+		;;
+	esac
+    else
+	echo "Mode not implemented for this step" | tee "$jd/output" 2>&1
+    fi
 }
 
 # for testing:
