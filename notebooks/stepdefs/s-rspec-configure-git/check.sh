@@ -2,7 +2,7 @@
 
 # TODO: make this script be called only when
 # the previously executed cell was a "provided-script cell"
-bash $(dirname $0)/save.sh
+# bash $(dirname $0)/save.sh
 
 . $(dirname $0)/stepdata.conf
 . /home/centos/notebooks/stepdefs/jenkins-utility/functions.sh
