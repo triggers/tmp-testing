@@ -34,6 +34,17 @@ function check_not_empty () {
     [[ ! -z $content ]]
 }
 
+function check_param_value() {
+    local element="${1}" required_values="${2}" job="${3}"
+    local content="$(grep -oP '(?<=<'${element}'>).*?(?=</'${element}'>)' /var/lib/jenkins/jobs/${job}/config.xml)"
+    for value in ${required_values} ; do
+        [[ "${content}" != *"${value}"* ]] && {
+            return 1
+        }
+    done
+    return 0
+}
+
 function reset_job () {
     local job=${1} cfg=${2}
 
