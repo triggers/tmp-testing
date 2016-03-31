@@ -1,4 +1,5 @@
 #!/bin/bash
+# . /home/centos/notebooks/stepdefs/jenkins-utility/xml-utility.sh
 
 original='\033[0m'
 red='\033[00;31m'
@@ -43,6 +44,26 @@ function check_param_value() {
         }
     done
     return 0
+}
+
+function check_find_line_with() {
+    local job="${1}" ; shift
+    local passed_check=
+    local occurances=1
+
+    let found=0
+    while read -r line ; do
+        passed_check=true
+        for keyword in $@ ; do
+            [[ ${line} != *"${keyword}"* ]] && passed_check=false
+        done
+        $passed_check && {
+            found=$(( $found+1 ))
+            [[ $found -eq $occurances ]] && return 0
+        }
+    done < /var/lib/jenkins/jobs/${job}/config.xml
+
+    return 1
 }
 
 function reset_job () {
