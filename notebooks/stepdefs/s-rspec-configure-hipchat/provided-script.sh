@@ -10,7 +10,7 @@ reboot=false
 function load_config() {
     local file="/var/lib/jenkins/jobs/${job}/config.xml"
     local element_name="${1}" element_value="${2}"
-    ssh -i /home/centos/mykeypair root@10.0.2.100 <<EOF  2> /dev/null
+    ssh -i /home/centos/mykeypair root@10.0.2.100 <<EOF 2> /dev/null
         $(declare -f xml_load_backup)
 
         value="\$(cat <<"XML_BLOCK"
