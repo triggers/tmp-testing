@@ -94,6 +94,53 @@ python -m bash_kernel.install
 EOF
 	) ; prev_cmd_failed
 
+	# Nbextensions used to be installed after tarring the basic
+	# jupyter install image.  Now it is here mainly because
+	# the nbextensions page is not showing up without restarting
+	# the server.  The VM reboot that comes after this place
+	# in ./build-nii.sh solves this.  Another reason is that
+	# installing nbextensions takes a little time, so it is nice
+	# to put it into the snapshot.  A third reason is that updates
+	# to extensions can break our system, so that makes it very nice
+	# to have working versions locked away in the snapshot.
+	(
+	    $starting_step "Install nbextensions to VM"
+	    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+		"$DATADIR/vmdir/ssh-to-kvm.sh" 'pip list | grep nbextensions' 2>/dev/null
+	    }
+	    $skip_step_if_already_done; set -e
+
+	    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
+
+pip install https://github.com/ipython-contrib/IPython-notebook-extensions/archive/master.zip --user
+
+EOF
+	) ; prev_cmd_failed
+
+	## Dynamically generate the steps for these:
+	enable_these="
+  usability/collapsible_headings/main
+  usability/init_cell/main
+  usability/runtools/main
+  usability/toc2/main
+"
+
+	# Note, it seems that collapsible_heading has replaced hierarchical_collapse,
+	# Therefore from the above I just removed this:  testing/hierarchical_collapse/main
+
+	cfg_path="./.jupyter/nbconfig/notebook.json"
+	for ext in $enable_these; do
+	    (
+		$starting_step "Enable extension: $ext"
+		[ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
+		    "$DATADIR/vmdir/ssh-to-kvm.sh" "grep $ext $cfg_path" 2>/dev/null 1>&2
+		}
+		$skip_step_if_already_done; set -e
+
+		"$DATADIR/vmdir/ssh-to-kvm.sh" jupyter nbextension enable $ext
+	    ) ; prev_cmd_failed
+	done
+
 	(
 	    $starting_step "Set default password for jupyter, plus other easy initial setup"
 	    JCFG="/home/centos/.jupyter/jupyter_notebook_config.py"
@@ -302,44 +349,6 @@ EOF
 	 http://download.oracle.com/otn-pub/java/jdk/8u73-b02/$targetfile \
 	 -O "$DATADIR/notebooks/.downloads/$targetfile"
 ) ; prev_cmd_failed
-
-(
-    $starting_step "Install nbextensions to VM"
-    [ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
-	"$DATADIR/vmdir/ssh-to-kvm.sh" 'pip list | grep nbextensions' 2>/dev/null
-    }
-    $skip_step_if_already_done; set -e
-
-    "$DATADIR/vmdir/ssh-to-kvm.sh" <<'EOF'
-
-pip install https://github.com/ipython-contrib/IPython-notebook-extensions/archive/master.zip --user
-
-EOF
-) ; prev_cmd_failed
-
-## Dynamically generate the steps for these:
-enable_these="
-  usability/collapsible_headings/main
-  usability/init_cell/main
-  usability/runtools/main
-  usability/toc2/main
-"
-
-# Note, it seems that collapsible_heading has replaced hierarchical_collapse,
-# Therefore from the above I just removed this:  testing/hierarchical_collapse/main
-
-cfg_path="./.jupyter/nbconfig/notebook.json"
-for ext in $enable_these; do
-    (
-	$starting_step "Enable extension: $ext"
-	[ -x "$DATADIR/vmdir/ssh-to-kvm.sh" ] && {
-	    "$DATADIR/vmdir/ssh-to-kvm.sh" "grep $ext $cfg_path" 2>/dev/null 1>&2
-	}
-	$skip_step_if_already_done; set -e
-
-	"$DATADIR/vmdir/ssh-to-kvm.sh" jupyter nbextension enable $ext
-    ) ; prev_cmd_failed
-done
 
 (
     $starting_step "Synchronize notebooks/ to VM"

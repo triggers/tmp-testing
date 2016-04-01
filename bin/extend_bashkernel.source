@@ -29,7 +29,7 @@ exec 77<"$BASH_SOURCE"
 exec 9<&1
 echo $$ >/tmp/bpid
 
-echopat='*echo $?*'
+echopat='echo $\?'
 
 blockingread()
 {
@@ -238,8 +238,19 @@ while sleep 0.2; do
 	# (Note: running the file in bash through standard input allows
 	#  a cell code to have an ssh line, followed by lines that
 	#  will be sent to ssh session.)
-	cat "$jd/input" | bash | tee "$jd/output" 2>&1
+	exec 78> >(exec tee -a "$jd/output" 2>&1)
+	bgtee=$!
+
+	# The next line "sources" the whole cell, so local variable
+	# assignments will persist in this process
+	source "$jd/input" >&78 2>&1
         echo "$?" >"$jd/rc"
+	
+	exec 78>&-  # close the tee
+	# the tee is a subprocess of this process, but for some
+	# reason the wait call does not agree, so the next
+	# line is a workaround to wait until sure that tee has finished
+	while [ -d /proc/$bgtee ] ; do sleep 0.1 ; done
     fi
     echo -n "$PS1"
 done

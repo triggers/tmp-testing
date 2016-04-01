@@ -103,7 +103,8 @@ new_job_dir()
 
 get_step_id()
 {
-    # (version 1) first line of the form: # (
+    # (version 1) line of the form: # (
+    # but only if it is the first line
     pat='#(*'
     while read ln; do
         nospaces="${ln// /}"
@@ -113,6 +114,7 @@ get_step_id()
             echo "$id"
             return 0
         fi
+	break # give up if not on the first line
     done <<<"$1"
     # (version 2) first line of the form: # Task: thetoken
     pat='#[tT]ask:*'
@@ -181,6 +183,49 @@ set_if_cell_includes()
     fi
 }
 
+# the "${command%% *}" is necessary because command may have parameters
+# (although for now this is an unused feature)
+
+do-my-script-logic()
+{
+    if command="$(get_cell_command "$stepid" "$input")"; then
+	case "${command%% *}" in
+	    */load.sh | */template.sh | */check.sh)
+		# these modes are done, because global_mode = "my-script"
+		echo "$command" >"$jd/command"
+		echo "$input" | bash $command | tee "$jd/output" 2>&1
+		echo "$?" >"$jd/rc"
+		;;
+	    *)
+		echo "Cell being skipped because global mode is $global_mode." | tee "$jd/output" 2>&1
+		;;
+	    # NOTE: myscript cells themself are run, but that is done
+	    # by code elsewhere that handles unmarked cells
+	esac
+    else
+	echo "Mode not implemented for this step" | tee "$jd/output" 2>&1
+    fi
+}
+
+do-provided-script-logic()
+{
+    if command="$(get_cell_command "$stepid" "$input")"; then
+	case "${command%% *}" in
+	    */provided-script.sh | */template.sh | */check.sh)
+		# these modes are done, because global_mode = "my-script"
+		echo "$command" >"$jd/command"
+		echo "$input" | bash $command | tee "$jd/output" 2>&1
+		echo "$?" >"$jd/rc"
+		;;
+	    *)
+		echo "Cell being skipped because global mode is $global_mode." | tee "$jd/output" 2>&1
+		;;
+	esac
+    else
+	echo "Mode not implemented for this step" | tee "$jd/output" 2>&1
+    fi
+}
+
 # for testing:
 while sleep 0.2; do
     ls -l /proc/$BASHPID/fd >>/tmp/sbash.log
@@ -211,56 +256,63 @@ while sleep 0.2; do
 
     didcmd=false
     if stepid="$(get_step_id "$input")"; then
-        # set -x
+        # the cell is labeled with a step name
         stepdir="$basedir/stepdefs/s-$stepid"
         if [ -d "$stepdir" ]; then
-	    ## TODO: demoable, but needs rethinking and rewriting
-	    if [ "$global_mode" != "none" ]; then
-		gcommand="$stepdir/$global_mode.sh"
-		if [ -f "$gcommand" ] && command="$(get_cell_command "$stepid" "$input")"; then
-		    if [[ "$command" == $gcommand* ]]; then
+	    # and that step name exists
+	    case "$global_mode" in
+		my-script)
+		    do-my-script-logic
+		    ;;
+		provided-script)
+		    do-provided-script-logic
+		    ;;
+		none)
+		    if command="$(get_cell_command "$stepid" "$input")"; then
+			# mode exists and global_mode=none, so do exactly what the
+			# mode says to do
 			echo "$command" >"$jd/command"
-			echo "(doing cell)"
 			echo "$input" | bash $command | tee "$jd/output" 2>&1
 			echo "$?" >"$jd/rc"
-			rm -f "$command".lastoutput
-			ln -s "$jd/output" "$command".lastoutput
+			didcmd=true
 		    else
-			( echo "(Skipping Cell)"
-			  cat "$command".lastoutput 2>/dev/null
-			) | tee "$jd/output" 2>&1
+			echo "Mode not implemented for this step" | tee "$jd/output" 2>&1
 		    fi
-                    didcmd=true
-		else
+		    ;;
+		*)
                     echo "No $global_mode mode for this cell" | tee "$jd/output" 2>&1
                     didcmd=true
-		fi
-            elif command="$(get_cell_command "$stepid" "$input")"; then
-                echo "$command" >"$jd/command"
-                echo "$input" | bash $command | tee "$jd/output" 2>&1
-                echo "$?" >"$jd/rc"
-                didcmd=true
-            fi
-        fi
-    fi
-    if ! $didcmd; then
-        # for default, execute code like normal bash cell
-	# (Note: running the file in bash through standard input allows
-	#  a cell code to have an ssh line, followed by lines that
-	#  will be sent to ssh session.)
-	exec 78> >(exec tee -a "$jd/output" 2>&1)
-	bgtee=$!
+		    ;;
+	    esac
+	else
+	    echo "Step name is not implemented" | tee "$jd/output" 2>&1
+	fi
+    else
+	# it is an unmarked cell, so assume it is a my-script cell
+	case "$global_mode" in
+	    my-script)
+		# for default, execute code like normal bash cell
+		# (Note: running the file in bash through standard input allows
+		#  a cell code to have an ssh line, followed by lines that
+		#  will be sent to ssh session.)
+		exec 78> >(exec tee -a "$jd/output" 2>&1)
+		bgtee=$!
 
-	# The next line "sources" the whole cell, so local variable
-	# assignments will persist in this process
-	source "$jd/input" >&78 2>&1
-        echo "$?" >"$jd/rc"
-	
-	exec 78>&-  # close the tee
-	# the tee is a subprocess of this process, but for some
-	# reason the wait call does not agree, so the next
-	# line is a workaround to wait until sure that tee has finished
-	while [ -d /proc/$bgtee ] ; do sleep 0.1 ; done
+		# The next line "sources" the whole cell, so local variable
+		# assignments will persist in this process
+		source "$jd/input" >&78 2>&1
+		echo "$?" >"$jd/rc"
+		
+		exec 78>&-  # close the tee
+		# the tee is a subprocess of this process, but for some
+		# reason the wait call does not agree, so the next
+		# line is a workaround to wait until sure that tee has finished
+		while [ -d /proc/$bgtee ] ; do sleep 0.1 ; done
+		;;
+	    *)
+		echo "Cell being skipped because global mode is $global_mode." | tee "$jd/output" 2>&1
+		;;
+	esac
     fi
     echo -n "$PS1"
 done
